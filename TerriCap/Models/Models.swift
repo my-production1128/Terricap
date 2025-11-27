@@ -13,3 +13,8 @@ struct Location: Decodable, Identifiable {
     let latitude: Double
     let longitude: Double
 }
+
+struct User: Identifiable {
+    let id: String
+    let email: String
+}

@@ -12,6 +12,7 @@ struct MapView: View {
     @StateObject private var mapViewModel = MapViewModel()
     // Supabase のピン
     @StateObject private var locationViewModel = LocationViewModel()
+    @Environment(AuthManager.self) private var authManager
     @State private var selectedLocation: MapItem? = nil
     
     var body: some View {
@@ -69,11 +70,24 @@ struct MapView: View {
                 }
                 Spacer()
             }
+            
         }
-        //ZStackも消してよい
+        .ignoresSafeArea(edges: [.bottom])
+        
+        VStack{
+            Button {
+                Task {
+                    await authManager.signOut()
+                }
+            } label: {
+                Text("サインアウト")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(width: 120, height: 40)
+                    .background(Color.blue)
+                    .cornerRadius(8)
+                    .padding()
+            }
+        }
     }
-}
-
-#Preview {
-    MapView()
 }
