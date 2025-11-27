@@ -11,8 +11,9 @@ import Combine
 
 struct MapItem: Identifiable {
     var id = UUID()
+    var name = ""
     var coordinate = CLLocationCoordinate2D()
-    var color = Color.blue
+    var occupy: Bool? = nil
 }
 
 // final class はそのまま維持。NSObject を継承して CLLocationManagerDelegate を実装

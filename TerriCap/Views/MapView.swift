@@ -70,22 +70,24 @@ struct MapView: View {
                 }
                 Spacer()
             }
+            
         }
-
         .ignoresSafeArea(edges: [.bottom])
         
-        Button {
-            Task {
-                await authManager.signOut()
+        VStack{
+            Button {
+                Task {
+                    await authManager.signOut()
+                }
+            } label: {
+                Text("サインアウト")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(width: 120, height: 40)
+                    .background(Color.blue)
+                    .cornerRadius(8)
+                    .padding()
             }
-        } label: {
-            Text("サインアウト")
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(width: 120, height: 40)
-                .background(Color.blue)
-                .cornerRadius(8)
-                .padding()
         }
     }
 }
