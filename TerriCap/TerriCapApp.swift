@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct TerriCapApp: App {
+    @State private var authManager = AuthManager()
     var body: some Scene {
         WindowGroup {
-            MapView()
+            ContentView()
+                .environment(authManager)
         }
     }
 }
+

@@ -12,6 +12,7 @@ struct MapView: View {
     @StateObject private var mapViewModel = MapViewModel()
     // Supabase のピン
     @StateObject private var locationViewModel = LocationViewModel()
+    @Environment(AuthManager.self) private var authManager
     
     var body: some View {
         Map(position: $mapViewModel.position) {
@@ -34,5 +35,21 @@ struct MapView: View {
             }
         }
         .ignoresSafeArea(edges: [.bottom])
+        
+        Button {
+            Task {
+                await authManager.signOut()
+            }
+        } label: {
+            Text("サインアウト")
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(width: 120, height: 40)
+                .background(Color.blue)
+                .cornerRadius(8)
+                .padding()
+        }
     }
 }
+
+

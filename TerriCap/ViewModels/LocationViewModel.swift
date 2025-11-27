@@ -14,7 +14,6 @@ class LocationViewModel: ObservableObject {
     @Published var items: [MapItem] = []
     @Published var error: String?
 
-    // Supabase から位置情報を取得
     func fetchLocations() async {
         do {
             let response: PostgrestResponse<[Location]> = try await SupabaseManager.shared.client
