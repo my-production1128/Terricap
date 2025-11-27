@@ -13,27 +13,65 @@ struct MapView: View {
     // Supabase のピン
     @StateObject private var locationViewModel = LocationViewModel()
     @Environment(AuthManager.self) private var authManager
+    @State private var selectedLocation: MapItem? = nil
     
     var body: some View {
-        Map(position: $mapViewModel.position) {
-            
-            ForEach(locationViewModel.items) { item in
-                Annotation(item.id.uuidString, coordinate: item.coordinate) {
-                    MakerView(item: item)
+        ZStack{
+            Map(position: $mapViewModel.position) {
+                
+                ForEach(locationViewModel.items) { item in
+                    Annotation(item.id.uuidString, coordinate: item.coordinate) {
+                        MarkerView(item: item)
+                            .contentShape(Rectangle())
+                            .onTapGesture{
+                                selectedLocation = item
+                            }
+                    }
                 }
             }
-        }
-        .mapControls {
-            MapUserLocationButton()
-            MapCompass()
-        }
-        .onAppear {
-            mapViewModel.checkAndRequestLocationPermission()
-
-            Task {
-                await locationViewModel.fetchLocations()
+            .sheet(item: $selectedLocation){ item in
+                HalfModalView(location: item)
+                    .presentationDetents([.fraction(0.45)])
+                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
+                    .presentationBackground(.clear)
+                    .presentationCornerRadius(55)
+            }
+            .ignoresSafeArea(edges: .bottom)
+            .mapControls {
+                MapUserLocationButton()
+                MapCompass()
+            }
+            .onAppear {
+                mapViewModel.checkAndRequestLocationPermission()
+                
+                Task {
+                    await locationViewModel.fetchLocations()
+                }
+            }
+            .ignoresSafeArea(edges: [.bottom])
+            //📍県大付近を表示するボタン　あとで消す
+            VStack{
+                HStack{
+                    Button{
+                        mapViewModel.position = .region(MKCoordinateRegion(
+                            center: CLLocationCoordinate2D(latitude: 32.806241, longitude: 130.765460), // 県大
+                            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+                        ))
+                    }label: {
+                        Image(systemName: "mappin.circle.fill")
+                            .resizable()
+                            .frame(width: 40, height: 40)
+                            .foregroundColor(.blue)
+                            .background(Color.white)
+                            .cornerRadius(30)
+                    }
+                    .padding()
+                    Spacer()
+                }
+                Spacer()
             }
         }
+
         .ignoresSafeArea(edges: [.bottom])
         
         Button {
@@ -51,5 +89,3 @@ struct MapView: View {
         }
     }
 }
-
-
