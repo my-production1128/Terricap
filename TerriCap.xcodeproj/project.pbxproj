@@ -13,7 +13,20 @@
 		065206072ED11922004E36B6 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 065206062ED11922004E36B6 /* Realtime */; };
 		065206092ED11922004E36B6 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 065206082ED11922004E36B6 /* Storage */; };
 		0652060B2ED11922004E36B6 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 0652060A2ED11922004E36B6 /* Supabase */; };
+		8A7B717C2EE2E0170032E4D5 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8A7B717B2EE2E0170032E4D5 /* WidgetKit.framework */; };
+		8A7B717E2EE2E0170032E4D5 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8A7B717D2EE2E0170032E4D5 /* SwiftUI.framework */; };
+		8A7B718F2EE2E0190032E4D5 /* LiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8A7B71792EE2E0170032E4D5 /* LiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8A7B718D2EE2E0190032E4D5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 065205C52ED07902004E36B6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8A7B71782EE2E0170032E4D5;
+			remoteInfo = LiveActivityExtension;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		0652065B2ED12030004E36B6 /* Embed Foundation Extensions */ = {
@@ -22,6 +35,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				8A7B718F2EE2E0190032E4D5 /* LiveActivityExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -30,6 +44,9 @@
 
 /* Begin PBXFileReference section */
 		065205CD2ED07902004E36B6 /* TerriCap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TerriCap.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A7B71792EE2E0170032E4D5 /* LiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A7B717B2EE2E0170032E4D5 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		8A7B717D2EE2E0170032E4D5 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -40,6 +57,13 @@
 			);
 			target = 065205CC2ED07902004E36B6 /* TerriCap */;
 		};
+		8A7B71932EE2E0190032E4D5 /* Exceptions for "LiveActivity" folder in "LiveActivityExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8A7B71782EE2E0170032E4D5 /* LiveActivityExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -49,6 +73,14 @@
 				06988F642ED7610D0082E4F4 /* Exceptions for "TerriCap" folder in "TerriCap" target */,
 			);
 			path = TerriCap;
+			sourceTree = "<group>";
+		};
+		8A7B717F2EE2E0170032E4D5 /* LiveActivity */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8A7B71932EE2E0190032E4D5 /* Exceptions for "LiveActivity" folder in "LiveActivityExtension" target */,
+			);
+			path = LiveActivity;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -67,6 +99,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8A7B71762EE2E0170032E4D5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A7B717E2EE2E0170032E4D5 /* SwiftUI.framework in Frameworks */,
+				8A7B717C2EE2E0170032E4D5 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -74,6 +115,8 @@
 			isa = PBXGroup;
 			children = (
 				065205CF2ED07902004E36B6 /* TerriCap */,
+				8A7B717F2EE2E0170032E4D5 /* LiveActivity */,
+				8A7B717A2EE2E0170032E4D5 /* Frameworks */,
 				065205CE2ED07902004E36B6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -82,8 +125,18 @@
 			isa = PBXGroup;
 			children = (
 				065205CD2ED07902004E36B6 /* TerriCap.app */,
+				8A7B71792EE2E0170032E4D5 /* LiveActivityExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8A7B717A2EE2E0170032E4D5 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8A7B717B2EE2E0170032E4D5 /* WidgetKit.framework */,
+				8A7B717D2EE2E0170032E4D5 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -101,6 +154,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				8A7B718E2EE2E0190032E4D5 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				065205CF2ED07902004E36B6 /* TerriCap */,
@@ -118,6 +172,28 @@
 			productReference = 065205CD2ED07902004E36B6 /* TerriCap.app */;
 			productType = "com.apple.product-type.application";
 		};
+		8A7B71782EE2E0170032E4D5 /* LiveActivityExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8A7B71902EE2E0190032E4D5 /* Build configuration list for PBXNativeTarget "LiveActivityExtension" */;
+			buildPhases = (
+				8A7B71752EE2E0170032E4D5 /* Sources */,
+				8A7B71762EE2E0170032E4D5 /* Frameworks */,
+				8A7B71772EE2E0170032E4D5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8A7B717F2EE2E0170032E4D5 /* LiveActivity */,
+			);
+			name = LiveActivityExtension;
+			packageProductDependencies = (
+			);
+			productName = LiveActivityExtension;
+			productReference = 8A7B71792EE2E0170032E4D5 /* LiveActivityExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -125,11 +201,14 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2600;
+				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					065205CC2ED07902004E36B6 = {
 						CreatedOnToolsVersion = 26.0.1;
+					};
+					8A7B71782EE2E0170032E4D5 = {
+						CreatedOnToolsVersion = 26.1.1;
 					};
 				};
 			};
@@ -151,12 +230,20 @@
 			projectRoot = "";
 			targets = (
 				065205CC2ED07902004E36B6 /* TerriCap */,
+				8A7B71782EE2E0170032E4D5 /* LiveActivityExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		065205CB2ED07902004E36B6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A7B71772EE2E0170032E4D5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -173,7 +260,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8A7B71752EE2E0170032E4D5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8A7B718E2EE2E0190032E4D5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8A7B71782EE2E0170032E4D5 /* LiveActivityExtension */;
+			targetProxy = 8A7B718D2EE2E0190032E4D5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		065205D62ED07903004E36B6 /* Debug */ = {
@@ -302,14 +404,20 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TerriCap/TerriCap.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5LAD85L55B;
+				DEVELOPMENT_TEAM = UX4Y5TQ52G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TerriCap/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "あなたの歩数データを読み取るためにHealthKitを使用します。";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "あなたの歩数を記録するためにHealthKitを使用します。";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"このアプリはあなたの現在地を地図上に表示するために位置情報を使用します\"";
+				INFOPLIST_KEY_NSMotionUsageDescription = "歩数を読み取ります";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -338,14 +446,20 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TerriCap/TerriCap.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5LAD85L55B;
+				DEVELOPMENT_TEAM = UX4Y5TQ52G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TerriCap/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "あなたの歩数データを読み取るためにHealthKitを使用します。";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "あなたの歩数を記録するためにHealthKitを使用します。";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"このアプリはあなたの現在地を地図上に表示するために位置情報を使用します\"";
+				INFOPLIST_KEY_NSMotionUsageDescription = "歩数を読み取ります";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -362,6 +476,70 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		8A7B71912EE2E0190032E4D5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UX4Y5TQ52G;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LiveActivity;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.runa0.TerriCap.LiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8A7B71922EE2E0190032E4D5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UX4Y5TQ52G;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LiveActivity;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.runa0.TerriCap.LiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -386,6 +564,15 @@
 			buildConfigurations = (
 				065205D92ED07903004E36B6 /* Debug */,
 				065205DA2ED07903004E36B6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8A7B71902EE2E0190032E4D5 /* Build configuration list for PBXNativeTarget "LiveActivityExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A7B71912EE2E0190032E4D5 /* Debug */,
+				8A7B71922EE2E0190032E4D5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
