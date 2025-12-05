@@ -17,7 +17,23 @@ struct MapView: View {
     @State private var showMarker: Bool = false
     private let zoomLevel: Double = 0.02
     private let cameraBounds = MapCameraBounds(maximumDistance: 2500)
-    
+
+//    歩数計用(steptracker)
+    @Environment(\.scenePhase) private var scenePhase
+    @StateObject private var viewModel: StepViewModel
+    init() {
+        let pedometer = PedometerManager.shared
+        let location = LocationManager.shared
+        let healthKit = HealthKitManager.shared
+        let vm = StepViewModel(
+            pedometerService: pedometer,
+            locationService: location,
+            healthKitService: healthKit
+        )
+
+        self._viewModel = StateObject(wrappedValue: vm)
+    }
+
     var body: some View {
         ZStack{
             Map(position: $mapViewModel.position, bounds: cameraBounds) {
@@ -52,7 +68,7 @@ struct MapView: View {
                 }
             }
             .sheet(item: $selectedLocation){ item in
-                HalfModalView(location: item)
+                HalfModalView(location: item, viewModel: self.viewModel)
                     .presentationDetents([.fraction(0.45)])
                     .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
                     .presentationBackground(.clear)
@@ -68,6 +84,13 @@ struct MapView: View {
                 
                 Task {
                     await locationViewModel.fetchLocations()
+                }
+                viewModel.setup()
+            }
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                if newPhase == .active {
+                    print("dbg App came to foreground. Fetching latest HealthKit steps.")
+                    viewModel.fetchLatestHealthKitSteps()
                 }
             }
             .ignoresSafeArea(edges: [.bottom])
@@ -88,6 +111,22 @@ struct MapView: View {
                             .cornerRadius(30)
                     }
                     .padding()
+
+                    VStack {
+                        Text("歩数")
+                            .font(.subheadline)
+                        Text(viewModel.cmLogText)
+                            .font(.largeTitle)
+                            .bold()
+                    }
+                    Button(action: {
+                        viewModel.stopMeasurement()
+                    }) {
+                        Text("測定停止")
+                            .padding()
+                    }.buttonStyle(.bordered)
+
+
                     Spacer()
                 }
                 Spacer()

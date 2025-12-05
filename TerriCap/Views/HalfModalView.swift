@@ -10,6 +10,14 @@ import SwiftUI
 struct HalfModalView: View {
     let location: MapItem
     @Environment(\.dismiss) private var dismiss
+
+//    歩数計用
+    @StateObject private var viewModel: StepViewModel
+    init(location: MapItem, viewModel: StepViewModel) {
+            self.location = location
+            self._viewModel = StateObject(wrappedValue: viewModel)
+        }
+
     var body: some View {
         ZStack {
             Rectangle()
@@ -32,7 +40,7 @@ struct HalfModalView: View {
                         .fontWeight(.bold)
                     Spacer()
                     Button{
-                        
+                        viewModel.startMeasurement()
                     }label: {
                             Image(systemName: "arrowtriangle.right.circle.fill")
                                 .resizable()
