@@ -11,28 +11,18 @@ import CoreLocation
 struct MarkerView: View {
     
     var item: MapItem
-    var statusColor: Color {
-        switch item.occupy {
-        case true:
-            return .blue
-        case false:
-            return .red
-        case nil:
-            return .gray
-        }
-    }
     
     var body: some View {
         ZStack{
             Image(systemName: "bubble.middle.bottom.fill")
                 .resizable()
                 .frame(width: 80.0, height: 100)
-                .foregroundColor(statusColor)
+                .foregroundColor(item.statusColor)
                 .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 5)
-            Image(systemName: "square.fill")
-                .resizable()
+            Rectangle()
                 .frame(width: 65, height: 65)
                 .foregroundColor(.white.opacity(0.8))
+                .cornerRadius(10)
                 .padding(.bottom, 19)
             VStack{
                 Text("2000歩")

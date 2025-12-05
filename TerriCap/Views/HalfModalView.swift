@@ -55,10 +55,10 @@ struct HalfModalView: View {
                 .padding(.vertical, 12)
                 HStack{
                     ZStack{
-                        Image(systemName: "squareshape.fill")
-                            .resizable()
+                        Rectangle()
                             .frame(width: 180, height: 100)
                             .foregroundColor(.orange)
+                            .cornerRadius(8)
                         VStack{
                             Text("辿り着くまでの歩数")
                                 .font(.headline)
@@ -73,10 +73,10 @@ struct HalfModalView: View {
                         .foregroundColor(.white)
                     }
                     ZStack{
-                        Image(systemName: "squareshape.fill")
-                            .resizable()
+                        Rectangle()
                             .frame(width: 180, height: 100)
                             .foregroundColor(.green)
+                            .cornerRadius(8)
                         VStack{
                             Text("消費するカロリー")
                                 .font(.headline)
@@ -93,10 +93,10 @@ struct HalfModalView: View {
                 }
                 .padding(.vertical, 5)
                 ZStack{
-                    Image(systemName: "squareshape.fill")
-                        .resizable()
+                    Rectangle()
                         .frame(width: 370, height: 100)
                         .foregroundColor(.brown)
+                        .cornerRadius(8)
                     VStack{
                         Text("スポット確保での獲得ポイント")
                             .font(.headline)

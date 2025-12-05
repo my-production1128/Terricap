@@ -14,6 +14,16 @@ struct MapItem: Identifiable {
     var name = ""
     var coordinate = CLLocationCoordinate2D()
     var occupy: Bool? = nil
+    var statusColor: Color {
+        switch self.occupy {
+        case true:
+            return .blue
+        case false:
+            return .red
+        case nil:
+            return .gray
+        }
+    }
 }
 
 // final class はそのまま維持。NSObject を継承して CLLocationManagerDelegate を実装

@@ -14,19 +14,41 @@ struct MapView: View {
     @StateObject private var locationViewModel = LocationViewModel()
     @Environment(AuthManager.self) private var authManager
     @State private var selectedLocation: MapItem? = nil
+    @State private var showMarker: Bool = false
+    private let zoomLevel: Double = 0.02
+    private let cameraBounds = MapCameraBounds(maximumDistance: 2500)
     
     var body: some View {
         ZStack{
-            Map(position: $mapViewModel.position) {
-                
+            Map(position: $mapViewModel.position, bounds: cameraBounds) {
                 ForEach(locationViewModel.items) { item in
                     Annotation(item.id.uuidString, coordinate: item.coordinate) {
-                        MarkerView(item: item)
-                            .contentShape(Rectangle())
-                            .onTapGesture{
-                                selectedLocation = item
-                            }
+                        if showMarker{
+                            MarkerView(item: item)
+                                .contentShape(Rectangle())
+                                .onTapGesture{
+                                    selectedLocation = item
+                                }
+                        } else {
+                           Circle()
+                                .fill(item.statusColor)
+                                .frame(width: 15, height: 15)
+                                .overlay(
+                                    Circle()
+                                        .stroke(.white, lineWidth: 2)
+                                )
+                                .transition(.scale.combined(with: .opacity))
+                                .onTapGesture{
+                                    selectedLocation = item
+                                }
+                        }
                     }
+                }
+            }
+            .onMapCameraChange{ context in
+                let currentSpan = context.region.span.latitudeDelta
+                withAnimation(.easeInOut(duration: 0.3)){
+                    showMarker = currentSpan < zoomLevel
                 }
             }
             .sheet(item: $selectedLocation){ item in
@@ -49,7 +71,7 @@ struct MapView: View {
                 }
             }
             .ignoresSafeArea(edges: [.bottom])
-            //📍県大付近を表示するボタン　あとで消す
+            //🦪🐸県大付近を表示するボタン　あとで消す
             VStack{
                 HStack{
                     Button{
