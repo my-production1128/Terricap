@@ -127,6 +127,6 @@ struct HalfModalView: View {
     }
 }
 
-//#Preview {
-//    HalfModalView(location: MapItem(name: "熊本県立大学"))
-//}
+#Preview {
+    HalfModalView(location: MapItem(name: "熊本県立大学"))
+}
