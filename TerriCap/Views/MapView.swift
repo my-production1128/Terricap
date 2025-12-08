@@ -13,7 +13,7 @@ struct MapView: View {
     // Supabase のピン
     @StateObject private var locationViewModel = LocationViewModel()
     @Environment(AuthManager.self) private var authManager
-    @State private var selectedLocation: MapItem? = nil
+    @State private var selectedLocation: Location? = nil
     @State private var showMarker: Bool = false
     private let zoomLevel: Double = 0.02
     private let cameraBounds = MapCameraBounds(maximumDistance: 2500)
@@ -38,7 +38,7 @@ struct MapView: View {
         ZStack{
             Map(position: $mapViewModel.position, bounds: cameraBounds) {
                 ForEach(locationViewModel.items) { item in
-                    Annotation(item.id.uuidString, coordinate: item.coordinate) {
+                    Annotation(item.name, coordinate: item.coordinate) {
                         if showMarker{
                             MarkerView(item: item)
                                 .contentShape(Rectangle())
@@ -47,7 +47,7 @@ struct MapView: View {
                                 }
                         } else {
                            Circle()
-                                .fill(item.statusColor)
+//                                .fill(item.statusColor)
                                 .frame(width: 15, height: 15)
                                 .overlay(
                                     Circle()
@@ -68,7 +68,7 @@ struct MapView: View {
                 }
             }
             .sheet(item: $selectedLocation){ item in
-                HalfModalView(location: item, viewModel: self.viewModel)
+                HalfModalView(item:item, viewModel: self.viewModel)
                     .presentationDetents([.fraction(0.45)])
                     .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
                     .presentationBackground(.clear)

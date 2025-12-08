@@ -11,32 +11,26 @@ import Combine
 
 @MainActor
 class LocationViewModel: ObservableObject {
-    @Published var items: [MapItem] = []
+    @Published var items: [Location] = []
     @Published var error: String?
-
+    
     func fetchLocations() async {
         do {
             let response: PostgrestResponse<[Location]> = try await SupabaseManager.shared.client
                 .from("locations")
-                .select()
+                .select("""
+                    id,
+                    name,
+                    latitude,
+                    longitude,
+                    tasks:tasks(*)
+                """)
+
                 .execute()
             
-            print("Supabase response:", response.value)
-
-            let locations = response.value
-
-            self.items = locations.map { location in
-                MapItem(
-                    id: UUID(),
-                    coordinate: CLLocationCoordinate2D(
-                        latitude: location.latitude,
-                        longitude: location.longitude
-                    )
-                )
-            }
+            self.items = response.value
+            print("Locations:", self.items)
             
-            print("MapItems:", self.items)
-
         } catch {
             self.error = error.localizedDescription
             print("fetchLocations error:", error)

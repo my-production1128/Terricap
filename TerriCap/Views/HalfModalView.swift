@@ -8,15 +8,15 @@
 import SwiftUI
 
 struct HalfModalView: View {
-    let location: MapItem
+    let item: Location
     @Environment(\.dismiss) private var dismiss
 
 //    歩数計用
-    @StateObject private var viewModel: StepViewModel
-    init(location: MapItem, viewModel: StepViewModel) {
-            self.location = location
-            self._viewModel = StateObject(wrappedValue: viewModel)
-        }
+    @StateObject var viewModel: StepViewModel
+//    init(viewModel: StepViewModel) {
+//            self.location = location
+//            self._viewModel = StateObject(wrappedValue: viewModel)
+//        }
 
     var body: some View {
         ZStack {
@@ -35,7 +35,7 @@ struct HalfModalView: View {
                             .foregroundStyle(Color.gray)
                     }
                     Spacer()
-                    Text("\(location.name)")
+                    Text("\(item.name)")
                         .font(.title3)
                         .fontWeight(.bold)
                     Spacer()
@@ -51,27 +51,27 @@ struct HalfModalView: View {
                 }
                 .padding(.top, 30)
                 VStack{
-                    if location.occupy == true {
-                        Text("今このスポットはあなたが占有しています")
-                    }else if location.occupy == false {
-                        Text("今このスポットは他の人が占有しています")
-                    }else{
-                        Text("今このスポットは誰のものでもありません")
-                    }
+//                    if location.occupy == true {
+//                        Text("今このスポットはあなたが占有しています")
+//                    }else if location.occupy == false {
+//                        Text("今このスポットは他の人が占有しています")
+//                    }else{
+//                        Text("今このスポットは誰のものでもありません")
+//                    }
                 }
                 .foregroundColor(.gray)
                 .padding(.vertical, 12)
                 HStack{
                     ZStack{
-                        Rectangle()
+                        Image(systemName: "squareshape.fill")
+                            .resizable()
                             .frame(width: 180, height: 100)
                             .foregroundColor(.orange)
-                            .cornerRadius(8)
                         VStack{
                             Text("辿り着くまでの歩数")
                                 .font(.headline)
                             HStack{
-                                Text("2000")
+                                Text("\(item.tasks?.first?.goal_move_value ?? 0)")
                                     .font(.largeTitle)
                                     .fontWeight(.heavy)
                                 Text("歩")
@@ -81,15 +81,15 @@ struct HalfModalView: View {
                         .foregroundColor(.white)
                     }
                     ZStack{
-                        Rectangle()
+                        Image(systemName: "squareshape.fill")
+                            .resizable()
                             .frame(width: 180, height: 100)
                             .foregroundColor(.green)
-                            .cornerRadius(8)
                         VStack{
                             Text("消費するカロリー")
                                 .font(.headline)
                             HStack{
-                                Text("50")
+                                Text("\(item.tasks?.first?.goal_spot_value ?? 0)")
                                     .font(.largeTitle)
                                     .fontWeight(.heavy)
                                 Text("kcal")
@@ -109,7 +109,7 @@ struct HalfModalView: View {
                         Text("スポット確保での獲得ポイント")
                             .font(.headline)
                         HStack{
-                            Text("1000")
+                            Text("\(item.tasks?.first?.goal_point_value ?? 0)")
                                 .font(.largeTitle)
                                 .fontWeight(.heavy)
                             Text("P")
@@ -126,7 +126,7 @@ struct HalfModalView: View {
         .ignoresSafeArea(edges: .bottom)
     }
 }
-
-#Preview {
-    HalfModalView(location: MapItem(name: "熊本県立大学"))
-}
+//
+//#Preview {
+//    HalfModalView(location: MapItem(name: "熊本県立大学"))
+//}

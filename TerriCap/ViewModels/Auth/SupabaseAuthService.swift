@@ -57,10 +57,5 @@ struct SupabaseAuthService {
         
         return User(id :supabaseUser.aud, email: email)
     }
-    
-    // googleを使った認証
-//    func signInWithGoogle() async throws {
-//        try await client.auth.signInWithOAuth(provider: .google)
-//    }
 }
 
