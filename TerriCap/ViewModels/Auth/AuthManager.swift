@@ -9,7 +9,7 @@ import Foundation
 import Observation
 
 @Observable
-@MainActor
+@MainActor //これ使ったらメインで動かしますよってこと
 class AuthManager{ // Viewとサーバーの橋渡し役・currentUserを管理
     // 実際にsupabaseにアクセス・Login,SignUp,SignOutの実行担当
     private let authService: SupabaseAuthService
@@ -63,13 +63,4 @@ class AuthManager{ // Viewとサーバーの橋渡し役・currentUserを管理
             currentUser = nil
         }
     }
-    
-    // googleサインインの関数
-//    func googleSignIn() async {
-//        do {
-//            try await authService.signInWithGoogle()
-//        } catch {
-//            print("DEBUG: Google Sign in error: \(error.localizedDescription)")
-//        }
-//    }
 }

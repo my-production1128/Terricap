@@ -52,23 +52,7 @@ struct LoginView: View {
                 .disabled(!formIsValid) // 入力が正しくないとボタンが押せなくする
                 .opacity(formIsValid ? 1.0 : 0.5) // 有効なら100,無効なら50にしてわかりやすくしている
                 .padding(.vertical)
-                
-//                Button {
-//                    Task { await authManager.googleSignIn() }
-//                } label: {
-//                    HStack {
-//                        Image(systemName: "globe")
-//                        Text("Google でログイン")
-//                            .font(.headline)
-//                    }
-//                    .foregroundColor(.white)
-//                    .frame(width: 352, height: 44)
-//                    .background(Color.red)
-//                    .cornerRadius(8)
-//                }
-//                .padding(.vertical)
 
-                
                 Spacer()
                 
                 Divider()
