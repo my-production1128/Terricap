@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-//
+//　メインにマージ
 
 struct LoginView: View {
     @Environment(AuthManager.self) private var authManager
