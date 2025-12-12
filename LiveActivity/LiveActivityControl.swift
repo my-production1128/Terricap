@@ -10,7 +10,7 @@ import SwiftUI
 import WidgetKit
 
 struct LiveActivityControl: ControlWidget {
-    static let kind: String = "com.runa0.TerriCap.LiveActivity"
+    static let kind: String = "com.hamamatsu.step-tracker.LiveActivity"
 
     var body: some ControlWidgetConfiguration {
         AppIntentControlConfiguration(
