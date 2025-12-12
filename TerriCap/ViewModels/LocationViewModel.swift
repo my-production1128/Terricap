@@ -4,33 +4,24 @@
 //  Created by 末廣月渚 on 2025/11/20.
 //
 import Foundation
-import Supabase
-import CoreLocation
 import SwiftUI
 import Combine
 
-@MainActor
-class LocationViewModel: ObservableObject {
+//@MainActor
+final class LocationViewModel: ObservableObject {
     @Published var items: [Location] = []
     @Published var error: String?
     
+    private let repository: LocationRepository
+
+    init(repository: LocationRepository = LocationRepository()) {
+        self.repository = repository
+    }
+
     func fetchLocations() async {
         do {
-            let response: PostgrestResponse<[Location]> = try await SupabaseManager.shared.client
-                .from("locations")
-                .select("""
-                    id,
-                    name,
-                    latitude,
-                    longitude,
-                    tasks:tasks(*)
-                """)
-
-                .execute()
-            
-            self.items = response.value
-            print("Locations:", self.items)
-            
+            let locations = try await repository.fetchLocations()
+            self.items = locations
         } catch {
             self.error = error.localizedDescription
             print("fetchLocations error:", error)

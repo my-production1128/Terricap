@@ -27,11 +27,14 @@ class AuthManager{ // Viewとサーバーの橋渡し役・currentUserを管理
     // ユーザー作成・成功したらcurrentUserを更新・失敗したらエラー表示
     func signUp(email: String, password: String) async {
         do{
-            self.currentUser = try await authService.signUp(email: email, password: password)
+            let _ = try await authService.signUp(email: email, password: password)
+            // ★ サインアップ直後は currentUser をセットしない！
+            self.currentUser = nil
         } catch {
             print("DEBUG: Sign up error: \(error.localizedDescription)")
         }
     }
+    
     // サインイン機能
     // ログインチェック・成功したらcurrentUserにユーザーをセット
     func signIn(email: String, password: String) async {
