@@ -6,6 +6,7 @@
 //
 import Foundation
 import HealthKit
+import CoreLocation
 
 // PedometerManagerが持つべき機能を定義
 protocol PedometerServiceType: AnyObject {
@@ -19,6 +20,7 @@ protocol PedometerServiceType: AnyObject {
 
 // LocationManagerが持つべき機能を定義
 protocol LocationServiceType {
+    var delegate: LocationServiceDelegate? { get set }
     // 既存のメソッドを定義
     func setup()
     func startUpdateLocation()
@@ -43,3 +45,8 @@ protocol HealthKitManagerDelegate: AnyObject {
     // リアルタイム歩数更新時に呼ばれる
     func healthKitManager(_ manager: HealthKitServiceType, didUpdateNumberOfSteps steps: Double)
 }
+
+protocol LocationServiceDelegate: AnyObject {
+    func locationManager(_ manager: LocationServiceType, didUpdateLocation location: CLLocation)
+}
+

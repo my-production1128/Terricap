@@ -6,17 +6,50 @@
 //
 import Foundation
 import Combine
+import CoreLocation
 
-class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, HealthKitManagerDelegate {
+class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, HealthKitManagerDelegate, LocationServiceDelegate {
 
-    @Published var cmLogText: String = "---"
+    // MARK: - データ管理
+    @Published var cmLogInt: Int = 0      // 現在の歩数
+    @Published var targetSteps: Int? = nil    // 目標歩数
+    @Published var isTaskCleared: Bool = false // クリアしたかどうかのフラグ
+
     @Published var activityText: String = "活動認識待機中..."
     @Published var hkLogText: String = "---"
-    @Published var statusText: String = "初期化中..."
+    @Published var statusText: String = "測定待機中"
 
-    private let pedometerService: PedometerServiceType
-    private let locationService: LocationServiceType
-    private let healthKitService: HealthKitServiceType
+    @Published var currentLocation: CLLocation?
+    @Published var targetLocation: Location?
+
+    // 距離表示用プロパティ
+    var distanceDisplayString: String? {
+        guard let userLoc = currentLocation,
+              let target = targetLocation else {
+            return nil
+        }
+        let targetLoc = CLLocation(latitude: target.latitude, longitude: target.longitude)
+        let rawDistance = userLoc.distance(from: targetLoc)
+        let roundedDistance = (rawDistance / 10).rounded() * 10
+
+        if roundedDistance >= 1000 {
+            return String(format: "%.1f km", roundedDistance / 1000)
+        } else {
+            return String(format: "%.0f m", roundedDistance)
+        }
+    }
+    var rawDistanceToTarget: Double? {
+            guard let userLoc = currentLocation,
+                  let target = targetLocation else {
+                return nil
+            }
+            let targetLoc = CLLocation(latitude: target.latitude, longitude: target.longitude)
+            return userLoc.distance(from: targetLoc)
+        }
+
+    private var pedometerService: PedometerServiceType
+    private var locationService: LocationServiceType
+    private var healthKitService: HealthKitServiceType
 
     init(
         pedometerService: PedometerServiceType,
@@ -29,97 +62,129 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         super.init()
 
         self.pedometerService.delegate = self
+        self.locationService.delegate = self
         self.healthKitService.delegate = self
     }
 
     func setup() {
         locationService.setup()
-        NotificationManager.shared.requestPermission()
-
         Task {
             do {
                 try await healthKitService.requestAuthorization()
-                print("HealthKit Authorization Succeeded")
             } catch {
                 print("HealthKit Authorization Failed: \(error.localizedDescription)")
             }
         }
     }
 
-    func startMeasurement() {
-        print("start")
-        self.statusText = "測定開始しました (CoreMotion & HealthKit)"
-        self.activityText = "活動認識待機中..."
+    // MARK: - 目標設定 (Startボタン押下時に呼ばれる想定)
+    func setTargetLocation(_ location: Location) {
+            self.targetLocation = location
+            self.isTaskCleared = false
+            if let firstTask = location.tasks?.first {
+                let goal = firstTask.goal_move_value
+                self.targetSteps = goal
+                print("目標設定: \(goal)歩")
 
-        self.cmLogText = "0"
+                checkTaskCondition()
+
+            } else {
+                self.targetSteps = nil
+                print("目標歩数が設定されていません")
+            }
+        }
+
+    // MARK: - 測定開始
+    func startMeasurement(target: Location? = nil) {
+        stopMeasurement()
+        if let location = target {
+                    self.setTargetLocation(location)
+                }
+        print("測定開始")
+        self.statusText = "測定中"
+
+        // 歩数をリセット
+        self.cmLogInt = 0
+
+        // 判定ロジック初期化
+        checkTaskCondition()
 
         LiveActivityManager.shared.start(initialSteps: 0)
         pedometerService.startUpdates()
         locationService.startUpdateLocation()
         healthKitService.startStepCountUpdates()
         fetchLatestHealthKitSteps()
-
-        Task {
-            let now = Date()
-            let startOfDay = Calendar.current.startOfDay(for: now)
-            if let sumSteps = await healthKitService.fetchStepCountSum(from: startOfDay, to: now) {
-                self.healthKitManager(self.healthKitService, didUpdateNumberOfSteps: sumSteps)
-                print("dbg HealthKit Step Count fetched manually: \(sumSteps)")
-            } else {
-                print("dbg HealthKit Step Count manual fetch failed.")
-            }
-        }
     }
 
+    // MARK: - 測定終了
     func stopMeasurement() {
-        print("stop")
-        self.statusText = "測定終了しました"
+        print("🛑 測定終了")
+        self.statusText = "測定終了"
+        self.cmLogInt = 0
         LiveActivityManager.shared.stop()
         pedometerService.stopUpdates()
         locationService.stopUpdateLocation()
     }
 
-    // MARK: - PedometerManagerDelegate (CoreMotion)
+    // MARK: - 歩数更新 (CoreMotion)
     func pedometerManager(_ manager: PedometerManager, didUpdateNumberOfSteps steps: NSNumber) {
-        let newLogText = "\(steps) 歩"
-        print("dbg CoreMotion steps \(steps)")
+        let stepInt = steps.intValue
 
-        LiveActivityManager.shared.update(steps: steps.intValue)
+        LiveActivityManager.shared.update(steps: stepInt)
 
         DispatchQueue.main.async {
-            self.cmLogText = newLogText
+            self.cmLogInt = stepInt
+            // 歩数が更新されるたびに目標達成チェック
+            self.checkTaskCondition()
         }
     }
 
+    // MARK: - 達成判定ロジック
+    private func checkTaskCondition() {
+        guard let target = targetSteps else { return }
+
+        if cmLogInt >= target {
+            if !isTaskCleared {
+                isTaskCleared = true
+                statusText = "条件達成！"
+                print("🎉 タスククリア！ 現在:\(cmLogInt) / 目標:\(target)")
+            }
+            self.checkOccupyStatus()
+        } else {
+            isTaskCleared = false
+        }
+    }
+
+    // MARK: - その他デリゲートメソッド
     func pedometerManager(_ manager: PedometerManager, didUpdateActivity activity: String) {
-        print("dbg CoreMotion Activity: \(activity)")
-        DispatchQueue.main.async {
-            self.activityText = activity
-        }
+        DispatchQueue.main.async { self.activityText = activity }
     }
 
-    // MARK: - HealthKitManagerDelegate (HealthKit) ⬇️ 追加
     func healthKitManager(_ manager: HealthKitServiceType, didUpdateNumberOfSteps steps: Double) {
-        let newLogText = "\(Int(steps)) 歩"
-        print("dbg HealthKit steps \(steps)")
-
-        DispatchQueue.main.async {
-            self.hkLogText = newLogText
-        }
+        DispatchQueue.main.async { self.hkLogText = "\(Int(steps)) 歩" }
     }
 
     func fetchLatestHealthKitSteps() {
         Task {
             let now = Date()
             let startOfDay = Calendar.current.startOfDay(for: now)
-
             if let sumSteps = await healthKitService.fetchStepCountSum(from: startOfDay, to: now) {
                 self.healthKitManager(self.healthKitService, didUpdateNumberOfSteps: sumSteps)
-
-                print("dbg HealthKit Step Count fetched automatically: \(sumSteps)")
-            } else {
-                print("dbg HealthKit Step Count automatic fetch failed.")
             }
         }
     }
+
+    func locationManager(_ manager: LocationServiceType, didUpdateLocation location: CLLocation) {
+        DispatchQueue.main.async { self.currentLocation = location
+            self.checkOccupyStatus()
+        }
+
+    }
+
+    private func checkOccupyStatus() {
+            // 距離が150m以内 かつ タスククリア済み かどうか
+            if let dist = rawDistanceToTarget, dist <= 150, isTaskCleared {
+                print("選択しているスポットを占有可能です")
+            }
+        }
 }
