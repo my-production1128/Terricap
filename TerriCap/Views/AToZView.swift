@@ -14,11 +14,12 @@ struct AToZView: View {
     @State private var alphabet: String = ""
     @State private var selectColor: Color = .red
     @FocusState private var isFocused: Bool
+    @StateObject private var viewModel = ProfileViewModel()
     let presetColors: [Color] = [
         .red, .orange, .yellow, .green, .mint, .teal, .cyan, .blue, .indigo, .purple, .pink, .brown, .gray, .black
     ]
     let columns = Array(repeating: GridItem(), count: 7)
-    
+    @AppStorage("isProfileSetup") private var isProfileSetup = false
     
     var body: some View {
         ZStack{
@@ -32,14 +33,14 @@ struct AToZView: View {
                     .font(.title)
                 ZStack{
                     Circle()
+                        .fill(selectColor)
                         .frame(width: 150, height: 150)
-                        .foregroundColor(selectColor)
                     Circle()
+                        .fill(.white.opacity(0.8))
                         .frame(width: 120, height: 120)
-                        .foregroundColor(.white.opacity(0.8))
                     Text(alphabet.uppercased())
+                        .foregroundStyle(selectColor)
                         .font(.system(size: 90))
-                        .foregroundColor(selectColor)
                 }
                 .padding(.vertical, 50)
                 VStack{
@@ -102,20 +103,32 @@ struct AToZView: View {
                         .padding(.vertical, 5)
                     }
                     .padding(.bottom, 40)
-                    Button{
-                        //🦪🐸
-                        print("ボタンが押されました！")
-                    }label: {
-                        Text("決定")
+                    Button {
+                        Task {
+                            await saveProfile()
+                        }
+                    } label: {
+                        Text(viewModel.isSaving ? "保存中…" : "決定")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 352, height: 44)
-                            .background(!alphabet.isEmpty ? Color.blue : Color.gray.opacity(0.5))
+                            .background(!alphabet.isEmpty && !nickname.isEmpty ? Color.blue : Color.gray.opacity(0.5))
                             .cornerRadius(8)
                     }
-                    .disabled(alphabet.isEmpty)
+                    .disabled(alphabet.isEmpty && nickname.isEmpty)
                 }
             }
+        }
+    }
+    
+    private func saveProfile() async {
+        let success = await viewModel.saveProfile(
+            name: nickname,
+            alphabet: alphabet,
+            color: selectColor.description
+        )
+        if success {
+            isProfileSetup = true
         }
     }
 }

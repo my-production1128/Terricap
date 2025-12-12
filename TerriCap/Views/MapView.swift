@@ -22,6 +22,8 @@ struct MapView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: StepViewModel
     init() {
+        _locationViewModel = StateObject(wrappedValue: LocationViewModel())
+        
         let pedometer = PedometerManager.shared
         let location = LocationManager.shared
         let healthKit = HealthKitManager.shared
