@@ -10,7 +10,7 @@ import CoreLocation
 
 struct MarkerView: View {
     
-    var item: Location
+    let item: Location
     
     var body: some View {
         ZStack{

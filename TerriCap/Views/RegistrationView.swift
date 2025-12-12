@@ -106,7 +106,10 @@ struct RegistrationView: View {
 
 private extension RegistrationView {
     func signUp() {
-        Task { await authManager.signUp(email: email, password: password) }
+        Task {
+            await authManager.signUp(email: email, password: password)
+            dismiss()
+        }
     }
     
     var formIsValid: Bool {

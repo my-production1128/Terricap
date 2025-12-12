@@ -8,6 +8,7 @@
 import Foundation
 import CoreLocation
 
+// decodableは受信
 struct Location: Decodable, Identifiable {
     let id: Int
     let name: String
@@ -29,7 +30,7 @@ struct TaskScore: Decodable, Identifiable {
     let created_at: String   // or Date
 }
 
-struct Profile: Decodable, Identifiable {
+struct Profile_Decodable: Decodable, Identifiable {
     let id: UUID
     let name: String
     let color: String
@@ -53,4 +54,12 @@ struct OwnerShip: Decodable, Identifiable {
 struct User: Identifiable {
     let id: String
     let email: String
+}
+
+// codableは送信
+struct Profile_Codable: Codable, Identifiable {
+    let id: UUID
+    let name: String
+    let color: String
+    let alphabet: String
 }
