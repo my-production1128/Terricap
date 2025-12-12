@@ -14,26 +14,50 @@ struct MarkerView: View {
     
     var body: some View {
         ZStack{
-            Image(systemName: "bubble.middle.bottom.fill")
-                .resizable()
-                .frame(width: 80.0, height: 100)
-//                .foregroundColor(item.statusColor)
-                .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 5)
-            Rectangle()
-                .frame(width: 65, height: 65)
-                .foregroundColor(.white.opacity(0.8))
-                .cornerRadius(10)
-                .padding(.bottom, 19)
-            VStack{
-                Text("\(item.tasks?.first?.goal_move_value ?? 0)歩")
-                Text("\(item.tasks?.first?.goal_spot_value ?? 0)kcal")
+            Circle()
+                .fill(.gray)
+                .frame(width: 15, height: 15)
+            ZStack{
+                Image(systemName: "bubble.middle.bottom.fill")
+                    .resizable()
+                    .frame(width: 110, height: 110)
+                    .cornerRadius(16)
+                //                .foregroundColor(item.statusColor)
+                    .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 5)
+                ZStack{
+                    Rectangle()
+                        .frame(width: 95, height: 75)
+                        .foregroundColor(.white.opacity(0.8))
+                        .cornerRadius(13)
+                    VStack{
+                        HStack{
+                            Image(systemName: "flag.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 15, height: 15)
+                                .padding(-3)
+                            Text("\(item.tasks?.first?.goal_move_value ?? 2000)歩")
+                        }
+                        HStack{
+                            //🦪🐸かも
+                            Image(systemName: "figure.strengthtraining.functional")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 15, height: 15)
+                                .padding(-3)
+                            Text("\(item.tasks?.first?.goal_spot_value ?? 200)kcal")
+                        }
+                    }
+                    .foregroundColor(.black.opacity(0.8))
+                }
+                
+            .padding(.bottom, 21)
             }
-            .foregroundColor(.black.opacity(0.8))
-            .padding(.bottom, 19)
+            .offset(x: 0, y: -55)
         }
     }
 }
 //
 //#Preview {
-//    MarkerView(item: MapItem(occupy: false))
+//    MarkerView(item: Location(id: 222222, name: "熊本県立大学", latitude: 100, longitude: 100, tasks: []))
 //}

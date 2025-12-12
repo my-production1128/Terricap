@@ -21,7 +21,7 @@ struct HalfModalView: View {
     var body: some View {
         ZStack {
             Rectangle()
-                .foregroundColor(Color.white.opacity(0.6))
+                .fill(Color.white.opacity(0.6))
             VStack {
                 HStack{
                     Button{
@@ -59,14 +59,14 @@ struct HalfModalView: View {
 //                        Text("今このスポットは誰のものでもありません")
 //                    }
                 }
-                .foregroundColor(.gray)
+                .foregroundStyle(.gray)
                 .padding(.vertical, 12)
                 HStack{
                     ZStack{
                         Image(systemName: "squareshape.fill")
                             .resizable()
                             .frame(width: 180, height: 100)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                         VStack{
                             Text("辿り着くまでの歩数")
                                 .font(.headline)
@@ -78,13 +78,13 @@ struct HalfModalView: View {
                                     .font(.title2)
                             }
                         }
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     }
                     ZStack{
                         Image(systemName: "squareshape.fill")
                             .resizable()
                             .frame(width: 180, height: 100)
-                            .foregroundColor(.green)
+                            .foregroundStyle(.green)
                         VStack{
                             Text("消費するカロリー")
                                 .font(.headline)
@@ -96,14 +96,14 @@ struct HalfModalView: View {
                                     .font(.title)
                             }
                         }
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     }
                 }
                 .padding(.vertical, 5)
                 ZStack{
                     Rectangle()
+                        .fill(.brown)
                         .frame(width: 370, height: 100)
-                        .foregroundColor(.brown)
                         .cornerRadius(8)
                     VStack{
                         Text("スポット確保での獲得ポイント")
@@ -116,7 +116,7 @@ struct HalfModalView: View {
                                 .font(.title)
                         }
                     }
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 }
                 Spacer()
             }
