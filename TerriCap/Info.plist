@@ -2,12 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSSupportsLiveActivities</key>
-	<true/>
-	<key>NSHealthShareUsageDescription</key>
-	<string>あなたの歩数データを読み取るためにHealthKitを使用します。</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>現在地の更新時に歩数をチェックし、プッシュ通知を送信するために使用します。</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
