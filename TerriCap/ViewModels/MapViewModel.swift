@@ -25,7 +25,10 @@ import Combine
 //        }
 //    }
 //}
-
+struct userProfile {
+    var userAlphabet : String
+    var userColor : Color
+}
 // final class はそのまま維持。NSObject を継承して CLLocationManagerDelegate を実装
 final class MapViewModel: NSObject, ObservableObject {
     
@@ -33,12 +36,16 @@ final class MapViewModel: NSObject, ObservableObject {
     private let manager = CLLocationManager()
     
     // 地図表示位置
-    @Published var position: MapCameraPosition = .region(
-        MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 32.806241, longitude: 130.765460), // 最初に映る画面に県大
-            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-        )
-    )
+//    @Published var position: MapCameraPosition = .region(
+//        MKCoordinateRegion(
+//            center: CLLocationCoordinate2D(latitude: 32.806241, longitude: 130.765460), // 最初に映る画面に県大
+//            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+//        )
+//    )
+    @Published var position: MapCameraPosition = .userLocation(fallback: .region(MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 32.806241, longitude:  130.765460),
+        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+    )))
     
     // 位置情報の許可ステータスを保持
     @Published var authorizationStatus: CLAuthorizationStatus?

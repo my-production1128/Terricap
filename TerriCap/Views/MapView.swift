@@ -14,10 +14,11 @@ struct MapView: View {
     @StateObject private var locationViewModel = LocationViewModel()
     @Environment(AuthManager.self) private var authManager
     @State private var selectedLocation: Location? = nil
-    @State private var showMarker: Bool = false
-    private let zoomLevel: Double = 0.02
+    //地図が拡大されているからいらなくなるだろう
+//    @State private var showMarker: Bool = false
+//    private let zoomLevel: Double = 0.02
     private let cameraBounds = MapCameraBounds(maximumDistance: 2500)
-
+    
 //    歩数計用(steptracker)
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: StepViewModel
@@ -39,36 +40,51 @@ struct MapView: View {
     var body: some View {
         ZStack{
             Map(position: $mapViewModel.position, bounds: cameraBounds) {
+                UserAnnotation{
+                    ZStack{
+                        //🦪🐸
+                        Circle()
+                            .fill(.orange)
+                            .frame(width: 31, height: 31)
+                            .shadow(radius: 3)
+                        Circle()
+                            .fill(.white.opacity(0.8))
+                            .frame(width: 25, height: 25)
+                        Text("A")
+                            .foregroundStyle(.orange)
+                            .font(.system(size: 20))
+                    }
+                }
                 ForEach(locationViewModel.items) { item in
                     Annotation(item.name, coordinate: item.coordinate) {
-                        if showMarker{
+//                        if showMarker{
                             MarkerView(item: item)
                                 .contentShape(Rectangle())
                                 .onTapGesture{
                                     selectedLocation = item
                                 }
-                        } else {
-                           Circle()
-//                                .fill(item.statusColor)
-                                .frame(width: 15, height: 15)
-                                .overlay(
-                                    Circle()
-                                        .stroke(.white, lineWidth: 2)
-                                )
-                                .transition(.scale.combined(with: .opacity))
-                                .onTapGesture{
-                                    selectedLocation = item
-                                }
-                        }
+//                        } else {
+//                           Circle()
+////                                .fill(item.statusColor)
+//                                .frame(width: 15, height: 15)
+//                                .overlay(
+//                                    Circle()
+//                                        .stroke(.white, lineWidth: 2)
+//                                )
+//                                .transition(.scale.combined(with: .opacity))
+//                                .onTapGesture{
+//                                    selectedLocation = item
+//                                }
+//                        }
                     }
                 }
             }
-            .onMapCameraChange{ context in
-                let currentSpan = context.region.span.latitudeDelta
-                withAnimation(.easeInOut(duration: 0.3)){
-                    showMarker = currentSpan < zoomLevel
-                }
-            }
+//            .onMapCameraChange{ context in
+//                let currentSpan = context.region.span.latitudeDelta
+//                withAnimation(.easeInOut(duration: 0.3)){
+//                    showMarker = currentSpan < zoomLevel
+//                }
+//            }
             .sheet(item: $selectedLocation){ item in
                 HalfModalView(item:item, viewModel: self.viewModel)
                     .presentationDetents([.fraction(0.45)])
@@ -96,23 +112,24 @@ struct MapView: View {
                 }
             }
             .ignoresSafeArea(edges: [.bottom])
-            //🦪🐸県大付近を表示するボタン　あとで消す
+            
             VStack{
                 HStack{
-                    Button{
-                        mapViewModel.position = .region(MKCoordinateRegion(
-                            center: CLLocationCoordinate2D(latitude: 32.806241, longitude: 130.765460), // 県大
-                            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-                        ))
-                    }label: {
-                        Image(systemName: "mappin.circle.fill")
-                            .resizable()
-                            .frame(width: 40, height: 40)
-                            .foregroundColor(.blue)
-                            .background(Color.white)
-                            .cornerRadius(30)
-                    }
-                    .padding()
+//🦪🐸県大付近を表示するボタン　あとで消す
+//                    Button{
+//                        mapViewModel.position = .region(MKCoordinateRegion(
+//                            center: CLLocationCoordinate2D(latitude: 32.806241, longitude: 130.765460), // 県大
+//                            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+//                        ))
+//                    }label: {
+//                        Image(systemName: "mappin.circle.fill")
+//                            .resizable()
+//                            .frame(width: 40, height: 40)
+//                            .foregroundStyle(.blue)
+//                            .background(Color.white)
+//                            .cornerRadius(30)
+//                    }
+//                    .padding()
 
                     VStack {
                         Text("歩数")
