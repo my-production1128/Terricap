@@ -10,6 +10,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, LocationServiceType 
     private var locationManger = CLLocationManager()
 
     private var _lastNumberOfSteps: NSNumber = 0
+    weak var delegate: LocationServiceDelegate?
 
     static var shared = LocationManager()
     private override init() {
@@ -70,19 +71,22 @@ class LocationManager: NSObject, CLLocationManagerDelegate, LocationServiceType 
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
         print("didUpdateLocations locations=\(locations)")
+        delegate?.locationManager(self, didUpdateLocation: location)
+
         var log = ""
         locations.forEach { location in
             let longitude =  location.coordinate.longitude
             let latitude = location.coordinate.latitude
             log += "long \(longitude), lat \(latitude)"
         }
-        let steps = PedometerManager.shared.numberOfSteps
+//        let steps = PedometerManager.shared.numberOfSteps
         // 歩数が違うときだけプッシュ通知
-        if steps != _lastNumberOfSteps {
-            _lastNumberOfSteps = steps
-            NotificationManager.shared.sendNotification(title: "歩数: \(steps), 位置情報", body: log)
-        }
+//        if steps != _lastNumberOfSteps {
+//            _lastNumberOfSteps = steps
+//            NotificationManager.shared.sendNotification(title: "歩数: \(steps), 位置情報", body: log)
+//        }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

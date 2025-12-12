@@ -13,6 +13,7 @@ struct HalfModalView: View {
 
 //    歩数計用
     @StateObject var viewModel: StepViewModel
+    @Binding var istargetLocation: Bool
 //    init(viewModel: StepViewModel) {
 //            self.location = location
 //            self._viewModel = StateObject(wrappedValue: viewModel)
@@ -40,7 +41,9 @@ struct HalfModalView: View {
                         .fontWeight(.bold)
                     Spacer()
                     Button{
-                        viewModel.startMeasurement()
+                        istargetLocation = true
+                        viewModel.startMeasurement(target: item)
+                        dismiss()
                     }label: {
                             Image(systemName: "arrowtriangle.right.circle.fill")
                                 .resizable()
