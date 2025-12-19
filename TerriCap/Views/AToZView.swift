@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Combine
 
 struct AToZView: View {
     
@@ -30,7 +29,9 @@ struct AToZView: View {
                 }
             VStack{
                 Text("プロフィール作成")
-                    .font(.title)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .opacity(0.6)
                 ZStack{
                     Circle()
                         .fill(selectColor)
@@ -44,28 +45,41 @@ struct AToZView: View {
                 }
                 .padding(.vertical, 50)
                 VStack{
-                    VStack{
-                        Text("ニックネームを入力")
-                            .font(.title2)
-                        TextField("ニックネーム", text: $nickname)
+                    VStack(alignment: .leading){
+                        Text("ニックネームを入力（15文字以内）")
+                            .font(.headline)
+                            .opacity(0.6)
+                            .padding(.bottom, -10)
+                        TextField("プク太郎", text: $nickname)
                             .focused($isFocused)
                             .font(.title2)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 340, height: 60)
+                            .onChange(of: nickname) { oldValue, newValue in
+                                let removeSpace = newValue.filter {!$0.isWhitespace && $0.isLetter}
+                                if newValue != removeSpace {
+                                    nickname = removeSpace
+                                }
+                                if nickname.count > 15 {
+                                    nickname = String(nickname.prefix(15))
+                                }
+                            }
                     }
-                    HStack{
-                        Text("A-Zを1文字入力：")
-                            .font(.title2)
+                    VStack(alignment: .leading){
+                        Text("A-Zを1文字入力")
+                            .font(.headline)
+                            .opacity(0.6)
+                            .padding(.bottom, -10)
                         TextField("A", text: $alphabet)
                             .focused($isFocused)
                             .font(.title2)
                             .multilineTextAlignment(.center)
                             .textFieldStyle(.roundedBorder)
-                            .frame(width: 80, height: 60)
+                            .frame(width: 340, height: 60)
                             .textInputAutocapitalization(.characters)
                             .keyboardType(.asciiCapable) // 英字キーボード
-                            .onReceive(Just(alphabet)){ _ in
-                                let removeSpace = alphabet.filter {!$0.isWhitespace && $0.isASCII && $0.isLetter}
+                            .onChange(of: alphabet){ _, newValue in
+                                let removeSpace = newValue.filter {!$0.isWhitespace && $0.isASCII && $0.isLetter}
                                 if alphabet != removeSpace {
                                     alphabet = removeSpace
                                 }
@@ -74,10 +88,12 @@ struct AToZView: View {
                                 }
                             }
                     }
-                    .padding(.bottom, 20)
-                    VStack{
+                    .padding(.vertical, 5)
+                    VStack(alignment: .leading){
                         Text("背景色を選択")
-                            .font(.title2)
+                            .font(.headline)
+                            .opacity(0.6)
+                            .padding(.leading, 30)
                         LazyVGrid(columns: columns, spacing: 7){
                             ForEach(presetColors, id: \.self){ color in
                                 Circle()
