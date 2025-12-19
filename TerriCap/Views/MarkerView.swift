@@ -16,7 +16,7 @@ struct MarkerView: View {
         ZStack{
             Circle()
                 .fill(.gray)
-                .frame(width: 15, height: 15)
+                .frame(width: 15, height: 11)
             ZStack{
                 Image(systemName: "bubble.middle.bottom.fill")
                     .resizable()

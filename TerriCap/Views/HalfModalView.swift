@@ -45,11 +45,12 @@ struct HalfModalView: View {
                         viewModel.startMeasurement(target: item)
                         dismiss()
                     }label: {
-                            Image(systemName: "arrowtriangle.right.circle.fill")
+                            Image(systemName: "figure.walk.circle.fill")
                                 .resizable()
                                 .frame(width: 50,height: 50)
                                 .padding(.leading, 4)
                                 .padding(.trailing, 19)
+                                .foregroundStyle(Color.blue)
                     }
                 }
                 .padding(.top, 30)
@@ -66,10 +67,10 @@ struct HalfModalView: View {
                 .padding(.vertical, 12)
                 HStack{
                     ZStack{
-                        Image(systemName: "squareshape.fill")
-                            .resizable()
+                        Rectangle()
+                            .fill(.orange)
                             .frame(width: 180, height: 100)
-                            .foregroundStyle(.orange)
+                            .cornerRadius(10)
                         VStack{
                             Text("辿り着くまでの歩数")
                                 .font(.headline)
@@ -84,10 +85,10 @@ struct HalfModalView: View {
                         .foregroundStyle(.white)
                     }
                     ZStack{
-                        Image(systemName: "squareshape.fill")
-                            .resizable()
+                        Rectangle()
+                            .fill(.green)
                             .frame(width: 180, height: 100)
-                            .foregroundStyle(.green)
+                            .cornerRadius(10)
                         VStack{
                             Text("消費するカロリー")
                                 .font(.headline)
@@ -105,11 +106,11 @@ struct HalfModalView: View {
                 .padding(.vertical, 5)
                 ZStack{
                     Rectangle()
-                        .fill(.brown)
+                        .fill(.red)
                         .frame(width: 370, height: 100)
-                        .cornerRadius(8)
+                        .cornerRadius(10)
                     VStack{
-                        Text("スポット確保での獲得ポイント")
+                        Text("スポット占有での獲得ポイント")
                             .font(.headline)
                         HStack{
                             Text("\(item.tasks?.first?.goal_point_value ?? 0)")
@@ -129,7 +130,3 @@ struct HalfModalView: View {
         .ignoresSafeArea(edges: .bottom)
     }
 }
-//
-//#Preview {
-//    HalfModalView(location: MapItem(name: "熊本県立大学"))
-//}
