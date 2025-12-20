@@ -11,6 +11,7 @@ import CoreLocation
 struct MarkerView: View {
     
     let item: Location
+    let statusColor: Color
     
     var body: some View {
         ZStack{
@@ -22,7 +23,7 @@ struct MarkerView: View {
                     .resizable()
                     .frame(width: 110, height: 110)
                     .cornerRadius(16)
-                //                .foregroundColor(item.statusColor)
+                    .foregroundColor(statusColor)
                     .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 5)
                 ZStack{
                     Rectangle()

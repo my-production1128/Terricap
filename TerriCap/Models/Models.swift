@@ -35,7 +35,17 @@ struct Profile_Decodable: Decodable, Identifiable {
     let name: String
     let color: String
     let alphabet: String
-    let total_spots: Int
+}
+
+struct Ownership: Decodable {
+    let id: Int
+    let location_id: Int
+    let user_id: UUID
+    let task_id: Int
+    let score_type: String
+    let score_value: Int
+    let occupied_at: Date
+    let updated_at: Date
 }
 
 struct TaskProgress: Decodable, Identifiable {
@@ -43,12 +53,6 @@ struct TaskProgress: Decodable, Identifiable {
     let user_id: UUID
     let move_progress: Int8
     let spot_progress: Int8
-}
-
-struct OwnerShip: Decodable, Identifiable {
-    let id: Int
-    let user_id: UUID
-    let task_id: Int
 }
 
 struct User: Identifiable {
@@ -63,3 +67,32 @@ struct Profile_Codable: Codable, Identifiable {
     let color: String
     let alphabet: String
 }
+
+struct OwnershipInsert: Encodable {
+    let location_id: Int
+    let user_id: UUID
+    let task_id: Int
+    let score_type: String
+    let score_value: Int
+    let occupied_at: Date
+    let updated_at: Date
+}
+
+struct OwnershipUpdate: Encodable {
+    let user_id: UUID
+    let task_id: Int
+    let score_type: String
+    let score_value: Int
+    let occupied_at: Date
+    let updated_at: Date
+}
+
+struct OwnershipHistoryInsert: Encodable {
+    let location_id: Int
+    let winner_user_id: UUID
+    let loser_user_id: UUID?
+    let task_id: Int
+    let score_type: String
+    let score_value: Int
+}
+

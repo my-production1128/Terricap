@@ -19,7 +19,7 @@ protocol PedometerServiceType: AnyObject {
 }
 
 // LocationManagerが持つべき機能を定義
-protocol LocationServiceType {
+protocol LocationServiceType: AnyObject {
     var delegate: LocationServiceDelegate? { get set }
     // 既存のメソッドを定義
     func setup()
