@@ -11,7 +11,7 @@ import Supabase
 
 @MainActor
 final class ProfileViewModel: ObservableObject {
-
+    @Published var profile: Profile_Decodable?
     @Published var isSaving = false // 保存中にローディング表示を出したい時に使うフラグ
     @Published var error: String? // エラーメッセージを View に公開するための変数
 
@@ -20,7 +20,22 @@ final class ProfileViewModel: ObservableObject {
     init(repository: ProfileRepository = ProfileRepository()) {
         self.repository = repository
     }
-
+    
+    func fetchProfile() async {
+        do {
+            guard let session = try? await SupabaseManager.shared.client.auth.session else {
+                self.error = "ログイン情報がありません"
+                return
+            }
+            let user = session.user
+            self.profile = try await repository.fetchProfile(userId: user.id)
+            print("profile:", self.profile as Any)
+            } catch {
+                self.error = error.localizedDescription
+            }
+        }
+    
+    
     // AToZ から呼ばれる保存関数
     func saveProfile(name: String, alphabet: String, color: String) async -> Bool {
         // ユーザー情報取得、もし失敗したらelseでreturn false

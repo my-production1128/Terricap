@@ -7,20 +7,26 @@
 import Foundation
 import Combine
 import CoreLocation
+import Supabase
 
 class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, HealthKitManagerDelegate, LocationServiceDelegate {
-
+    
     // MARK: - データ管理
     @Published var cmLogInt: Int = 0      // 現在の歩数
     @Published var targetSteps: Int? = nil    // 目標歩数
     @Published var isTaskCleared: Bool = false // クリアしたかどうかのフラグ
-
+    
     @Published var activityText: String = "活動認識待機中..."
     @Published var hkLogText: String = "---"
     @Published var statusText: String = "測定待機中"
-
+    
     @Published var currentLocation: CLLocation?
     @Published var targetLocation: Location?
+    @Published var occupyStatusText: String?
+    // 占有状況把握のための以下三つ
+    @Published var mapItems: [MapItem] = []
+    @Published var ownedLocationIds: Set<Int> = []
+    @Published var otherOwnedLocationIds: Set<Int> = []
 
     // 距離表示用プロパティ
     var distanceDisplayString: String? {
@@ -31,7 +37,7 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         let targetLoc = CLLocation(latitude: target.latitude, longitude: target.longitude)
         let rawDistance = userLoc.distance(from: targetLoc)
         let roundedDistance = (rawDistance / 10).rounded() * 10
-
+        
         if roundedDistance >= 1000 {
             return String(format: "%.1f km", roundedDistance / 1000)
         } else {
@@ -39,18 +45,23 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         }
     }
     var rawDistanceToTarget: Double? {
-            guard let userLoc = currentLocation,
-                  let target = targetLocation else {
-                return nil
-            }
-            let targetLoc = CLLocation(latitude: target.latitude, longitude: target.longitude)
-            return userLoc.distance(from: targetLoc)
+        guard let userLoc = currentLocation,
+              let target = targetLocation else {
+            return nil
         }
-
-    private var pedometerService: PedometerServiceType
-    private var locationService: LocationServiceType
-    private var healthKitService: HealthKitServiceType
-
+        let targetLoc = CLLocation(latitude: target.latitude, longitude: target.longitude)
+        return userLoc.distance(from: targetLoc)
+    }
+    
+    private let pedometerService: PedometerServiceType
+    private let locationService: LocationServiceType
+    private let healthKitService: HealthKitServiceType
+ 
+    private var ownershipRepository: OwnershipRepositoryType?
+    private var currentUserId: UUID?
+    private var hasTriedOccupy = false
+    
+    
     init(
         pedometerService: PedometerServiceType,
         locationService: LocationServiceType,
@@ -60,12 +71,17 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         self.locationService = locationService
         self.healthKitService = healthKitService
         super.init()
-
+        
         self.pedometerService.delegate = self
         self.locationService.delegate = self
         self.healthKitService.delegate = self
     }
-
+    
+    func configure(currentUserId: UUID) {
+        self.currentUserId = currentUserId
+        self.ownershipRepository = OwnershipRepository.shared
+    }
+    
     func setup() {
         locationService.setup()
         Task {
@@ -76,46 +92,47 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
             }
         }
     }
-
+    
     // MARK: - 目標設定 (Startボタン押下時に呼ばれる想定)
     func setTargetLocation(_ location: Location) {
-            self.targetLocation = location
-            self.isTaskCleared = false
-            if let firstTask = location.tasks?.first {
-                let goal = firstTask.goal_move_value
-                self.targetSteps = goal
-                print("目標設定: \(goal)歩")
-
-                checkTaskCondition()
-
-            } else {
-                self.targetSteps = nil
-                print("目標歩数が設定されていません")
-            }
+        self.targetLocation = location
+        self.isTaskCleared = false
+        if let firstTask = location.tasks?.first {
+            let goal = firstTask.goal_move_value
+            self.targetSteps = goal
+            print("目標設定: \(goal)歩")
+            
+            checkTaskCondition()
+            
+        } else {
+            self.targetSteps = nil
+            print("目標歩数が設定されていません")
         }
-
+    }
+    
     // MARK: - 測定開始
     func startMeasurement(target: Location? = nil) {
         stopMeasurement()
+        hasTriedOccupy = false
         if let location = target {
-                    self.setTargetLocation(location)
-                }
+            self.setTargetLocation(location)
+        }
         print("測定開始")
         self.statusText = "測定中"
-
+        
         // 歩数をリセット
         self.cmLogInt = 0
-
+        
         // 判定ロジック初期化
         checkTaskCondition()
-
+        
         LiveActivityManager.shared.start(initialSteps: 0)
         pedometerService.startUpdates()
         locationService.startUpdateLocation()
         healthKitService.startStepCountUpdates()
         fetchLatestHealthKitSteps()
     }
-
+    
     // MARK: - 測定終了
     func stopMeasurement() {
         print("🛑 測定終了")
@@ -125,24 +142,24 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         pedometerService.stopUpdates()
         locationService.stopUpdateLocation()
     }
-
+    
     // MARK: - 歩数更新 (CoreMotion)
     func pedometerManager(_ manager: PedometerManager, didUpdateNumberOfSteps steps: NSNumber) {
         let stepInt = steps.intValue
-
+        
         LiveActivityManager.shared.update(steps: stepInt)
-
+        
         DispatchQueue.main.async {
             self.cmLogInt = stepInt
             // 歩数が更新されるたびに目標達成チェック
             self.checkTaskCondition()
         }
     }
-
+    
     // MARK: - 達成判定ロジック
     private func checkTaskCondition() {
         guard let target = targetSteps else { return }
-
+        
         if cmLogInt >= target {
             if !isTaskCleared {
                 isTaskCleared = true
@@ -154,16 +171,16 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
             isTaskCleared = false
         }
     }
-
+    
     // MARK: - その他デリゲートメソッド
     func pedometerManager(_ manager: PedometerManager, didUpdateActivity activity: String) {
         DispatchQueue.main.async { self.activityText = activity }
     }
-
+    
     func healthKitManager(_ manager: HealthKitServiceType, didUpdateNumberOfSteps steps: Double) {
         DispatchQueue.main.async { self.hkLogText = "\(Int(steps)) 歩" }
     }
-
+    
     func fetchLatestHealthKitSteps() {
         Task {
             let now = Date()
@@ -173,18 +190,140 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
             }
         }
     }
-
+    
     func locationManager(_ manager: LocationServiceType, didUpdateLocation location: CLLocation) {
         DispatchQueue.main.async { self.currentLocation = location
             self.checkOccupyStatus()
         }
-
+        
     }
-
+    
     private func checkOccupyStatus() {
-            // 距離が150m以内 かつ タスククリア済み かどうか
-            if let dist = rawDistanceToTarget, dist <= 150, isTaskCleared {
-                print("選択しているスポットを占有可能です")
+        // ---- デバッグログ ----
+        print("---- checkOccupyStatus ----")
+        print("rawDistance:", rawDistanceToTarget ?? -1)
+        print("isTaskCleared:", isTaskCleared)
+        print("hasTriedOccupy:", hasTriedOccupy)
+        print("currentUserId:", currentUserId as Any)
+        print("targetLocation:", targetLocation as Any)
+        
+        // ---- 二重実行防止 ----
+        if hasTriedOccupy {
+            return
+        }
+        
+        // ---- 占有可能かの前提条件 ----
+        guard
+            let ownershipRepository,
+            let userId = currentUserId,
+            let distance = rawDistanceToTarget,
+            distance <= 150,
+            isTaskCleared,
+            let location = targetLocation,
+            let task = location.tasks?.first
+        else {
+            print("guard failed (not ready to occupy)")
+            return
+        }
+        
+        // ---- 状態確定 ----
+        print("occupy try start")
+        
+        // ---- 占有処理 ----
+        Task {
+            do {
+                let result = try await ownershipRepository.tryOccupyLocation(
+                    locationId: location.id,
+                    userId: userId,
+                    taskId: task.id,
+                    scoreType: "steps",
+                    scoreValue: cmLogInt
+                )
+                
+                await MainActor.run {
+                    handleOccupyResult(result)
+                }
+            } catch {
+                await MainActor.run {
+                    occupyStatusText = "通信エラーが発生しました"
+                    print("occupy error:", error)
+                }
             }
         }
+    }
+    
+    @MainActor
+    private func handleOccupyResult(_ result: OccupyResult) {
+        switch result {
+        case .success:
+            occupyStatusText = "スポットを占有しました！"
+            hasTriedOccupy = true
+            print("占有できています")
+            
+        case .alreadyOwned:
+            occupyStatusText = "すでに占有しています"
+            hasTriedOccupy = true
+            print("既に占有してます")
+            
+        case .lose:
+            occupyStatusText = "歩数が足りません"
+            hasTriedOccupy = false
+            print("歩数が足りません（再挑戦可）")
+        }
+    }
+    
+    @MainActor
+    func refreshOwnershipStates(locations: [Location]) async {
+        guard
+            let ownershipRepository,
+            let userId = currentUserId
+        else {
+            print("ownershipRepository or userId is nil")
+            return
+        }
+
+        do {
+            async let myIds = ownershipRepository.fetchOwnedLocationIds(userId: userId)
+            async let otherIds = ownershipRepository.fetchOtherOwnedLocationIds(userId: userId)
+
+            let (owned, otherOwned) = try await (myIds, otherIds)
+
+            ownedLocationIds = Set(owned)
+            otherOwnedLocationIds = Set(otherOwned)
+
+            buildMapItems(
+                locations: locations,
+                ownedLocationIds: ownedLocationIds,
+                otherOwnedLocationIds: otherOwnedLocationIds
+            )
+        } catch {
+            print("failed to refresh ownership states:", error)
+        }
+    }
+
+    
+    func buildMapItems(
+        locations: [Location],
+        ownedLocationIds: Set<Int>,
+        otherOwnedLocationIds: Set<Int>
+    ) {
+        mapItems = locations.map { location in
+            let status: OccupyStatus
+
+            if ownedLocationIds.contains(location.id) {
+                status = .ownedByMe
+            } else if otherOwnedLocationIds.contains(location.id) {
+                status = .ownedByOther
+            } else {
+                status = .notOwned
+            }
+
+            return MapItem(
+                id: location.id,
+                name: location.name,
+                coordinate: location.coordinate,
+                occupyStatus: status
+            )
+        }
+    }
 }

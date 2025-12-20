@@ -6,29 +6,22 @@ import SwiftUI
 struct ContentView: View {
     @Environment(AuthManager.self) private var authManager
     @AppStorage("isProfileSetup") private var isProfileSetup = false
-    
-    // デバッグ用：後で消す
-    private let debugResetProfile = true
-    
+
     var body: some View {
         Group {
-            if authManager.currentUser != nil {
+            if authManager.currentUser == nil {
+                LoginView()
 
-                if !isProfileSetup {
-                    AToZView()
-                } else {
-                    MapView()
-                }
+            } else if !isProfileSetup {
+                AToZView()
 
             } else {
-                LoginView()
+                MapView()
             }
         }
         .task {
-            if debugResetProfile { // 後で消す
-                isProfileSetup = false
-            }
             await authManager.refreshUser()
         }
     }
 }
+
