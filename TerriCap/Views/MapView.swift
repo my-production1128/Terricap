@@ -18,9 +18,13 @@ struct MapView: View {
     @StateObject private var viewModel: StepViewModel
     @Environment(AuthManager.self) private var authManager
     @Environment(\.scenePhase) private var scenePhase
-    @State private var selectedLocation: Location? = nil
+    //地図が拡大されているからいらなくなるだろう
+//    @State private var showMarker: Bool = false
+//    private let zoomLevel: Double = 0.02
     private let cameraBounds = MapCameraBounds(maximumDistance: 2500)
+    @State private var selectedLocation: Location? = nil
     @State var istargetLocation = false
+    @State private var showingAlert: Bool = false
     
     init() {
         _locationViewModel = StateObject(wrappedValue: LocationViewModel())
@@ -75,23 +79,86 @@ struct MapView: View {
 
                             MarkerView(
                                 item: location,
-                                statusColor: mapItem.statusColor   // ← ここがポイント
+                                statusColor: mapItem.statusColor
                             )
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                selectedLocation = location
+                                withAnimation(.easeOut(duration: 2.0)) {
+                                    selectedLocation = location
+                                    mapViewModel.position = .region(MKCoordinateRegion(
+                                        center: location.coordinate,
+                                        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                                    ))
+                                }
                             }
                         }
+//    ------------------以下ことはちゃん確認お願いします_01---------------------
+//                ForEach(locationViewModel.items) { item in
+//                    Annotation(item.name, coordinate: item.coordinate) {
+//                        if showMarker{
+//                            MarkerView(item: item)
+//                                .contentShape(Rectangle())
+//                                .onTapGesture{
+//                                    withAnimation(.easeOut(duration: 2.0)) {
+//                                        //                                    viewModel.setTargetLocation(item)
+//                                        selectedLocation = item
+//                                        mapViewModel.position = .region(MKCoordinateRegion(
+//                                            center: item.coordinate,
+//                                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+//                                        ))
+//                                    }
+//                                }
+//                        } else {
+//                            Circle()
+//                            //                                .fill(item.statusColor)
+//                                .frame(width: 15, height: 15)
+//                                .overlay(
+//                                    Circle()
+//                                        .stroke(.white, lineWidth: 2)
+//                                )
+//                                .transition(.scale.combined(with: .opacity))
+//                                .onTapGesture{
+//                                    //                                    viewModel.setTargetLocation(item)
+//                                    selectedLocation = item
+//                                }
+//                        }
+//        ------------------ここまで---------------------
                     }
+                    .annotationTitles(.hidden)
                 }
             }
             
-            .sheet(item: $selectedLocation){ item in
-                HalfModalView(item:item, viewModel: self.viewModel, istargetLocation: $istargetLocation)
-                    .presentationDetents([.fraction(0.45)])
-                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
-                    .presentationBackground(.clear)
-                    .presentationCornerRadius(55)
+//            .sheet(item: $selectedLocation){ item in
+//                HalfModalView(item:item, viewModel: self.viewModel, istargetLocation: $istargetLocation)
+//                    .presentationDetents([.fraction(0.45)])
+//                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
+//                    .presentationBackground(.clear)
+//                    .presentationCornerRadius(55)
+//            .onMapCameraChange{ context in
+//                let currentSpan = context.region.span.latitudeDelta
+//                withAnimation(.easeInOut(duration: 0.3)){
+//                    showMarker = currentSpan < zoomLevel
+//                }
+//            }
+            //    ------------------以下ことはちゃん確認お願いします_02---------------------
+            .sheet(isPresented: Binding(
+                get: {
+                    selectedLocation != nil
+                },
+                set: {
+                    if !$0 { selectedLocation = nil }
+                }
+            )){
+                if let item = selectedLocation {
+                    HalfModalView(item:item, viewModel: self.viewModel, istargetLocation: $istargetLocation)
+                        .presentationDetents([.fraction(0.45)])
+                        .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
+                        .presentationBackground(.clear)
+                        .presentationCornerRadius(55)
+                        .id(item.id)
+                        .transition(.identity)
+                }
+                //    ------------------ここまで---------------------
             }
             .ignoresSafeArea(edges: .bottom)
             .mapControls {
@@ -120,59 +187,79 @@ struct MapView: View {
                 }
             }
             .ignoresSafeArea(edges: [.bottom])
-            
-            VStack{
-                HStack{
-//🦪🐸県大付近を表示するボタン　あとで消す
-//                    Button{
-//                        mapViewModel.position = .region(MKCoordinateRegion(
-//                            center: CLLocationCoordinate2D(latitude: 32.806241, longitude: 130.765460), // 県大
-//                            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-//                        ))
-//                    }label: {
-//                        Image(systemName: "mappin.circle.fill")
-//                            .resizable()
-//                            .frame(width: 40, height: 40)
-//                            .foregroundStyle(.blue)
-//                            .background(Color.white)
-//                            .cornerRadius(30)
-//                    }
-//                    .padding()
-
-                    VStack {
-                        Text("歩数")
-                            .font(.subheadline)
-                        Text("\(viewModel.cmLogInt)")
-                            .font(.largeTitle)
-                            .bold()
-                    }
-                    Button(action: {
-                        istargetLocation = false
-                        viewModel.stopMeasurement()
-                    }) {
-                        Text("測定停止")
-                            .padding()
-                    }.buttonStyle(.bordered)
-
-                    if let target = viewModel.targetSteps {
-                        Text("目標歩数：\(target)")
-                            .font(.headline)
-                            .foregroundColor(.black)
-                    } else {
-                        Text("(目標未設定)")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-
-
+            if istargetLocation{
+                VStack{
                     Spacer()
+                    HStack{
+                        Rectangle()
+                            .fill(.white.opacity(0.9))
+                            .frame(width: 135, height: 90)
+                            .cornerRadius(30)
+                            .overlay(
+                                ZStack{
+                                    ZStack{
+                                        Text("歩数")
+                                            .font(.caption)
+                                        if viewModel.isTaskCleared {
+                                            Image(systemName: "checkmark.seal.fill")
+                                                .resizable()
+                                                .frame(width: 20, height: 20)
+                                                .symbolRenderingMode(.palette)
+                                                .foregroundStyle(.white, .yellow)
+                                                .padding(.leading, 55)
+                                        }
+                                    }
+                                    .padding(.bottom, 50)
+                                    HStack {
+                                        Text("\(viewModel.cmLogInt)")
+                                            .font(.title)
+                                            .bold()
+                                            .padding(.bottom, 5)
+                                        if let target = viewModel.targetSteps {
+                                            Text("/\(target)")
+                                                .font(.caption)
+                                                .foregroundColor(.black)
+                                        } else {
+                                            Text("/目標未設定")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
+                                    }
+                                    .padding(.top, 12)
+                                }
+                                    //.padding(.vertical, 20)
+                            )
+                            .padding(.vertical, 20)
+                            .padding(.horizontal, 7)
+                        Spacer()
+                        Button(action: {
+                            showingAlert.toggle()
+                        }) {
+                            Image(systemName: "stop.circle.fill")
+                                .resizable()
+                                .frame(width: 50, height: 50)
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(.white, .red)
+                                .padding(14)
+                            
+                        }
+                    }
                 }
-                Spacer()
+                
             }
-
         }
         .ignoresSafeArea(edges: [.bottom])
+        .alert("確認", isPresented: $showingAlert){
+            Button("いいえ", role: .cancel){}
+            Button("はい"){
+                istargetLocation = false
+                viewModel.stopMeasurement()
+            }
+        } message: {
+            Text("現在の測定内容を破棄しますか？")
+        }
 
+        
         HStack{
             Button {
                 Task {
@@ -193,27 +280,33 @@ struct MapView: View {
                        let targetName = viewModel.targetLocation?.name {
                         VStack(spacing: 4) {
                             if let rawDist = viewModel.rawDistanceToTarget, rawDist <= 150 {
-                                Text("占有範囲に入りました (\(distanceText))")
+                                HStack{
+                                    Image(systemName: "exclamationmark.circle.fill")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 38, height: 38)
+                                        .symbolRenderingMode(.palette)
+                                        .foregroundStyle(.white, .yellow)
+                                    Text("占有範囲に入りました (\(distanceText))")
+                                        .font(.title2)
+                                }
                             } else {
-                                Text("現在地から\(targetName)まで \(distanceText)")
+                                HStack{
+                                    Image(systemName: "mappin.and.ellipse")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 43, height: 43)
+                                        .foregroundStyle(.green)
+                                    VStack(alignment: .leading){
+                                        Text("\(targetName)まで")
+                                            .font(.caption)
+                                        Text("残り\(distanceText)")
+                                            .font(.title3)
+                                            .bold()
+                                    }
+                                }
                             }
                         }
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.9))
-                                .shadow(radius: 3)
-                        )
-                    }
-                    if viewModel.isTaskCleared {
-                        Text("タスク条件クリア！🎉")
-                            .font(.headline)
-                            .fontWeight(.heavy)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.red)
-                            .cornerRadius(12)
-                            .shadow(radius: 5)
-                            .transition(.scale.combined(with: .opacity))
                     }
                 }
             }

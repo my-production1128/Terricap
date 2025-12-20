@@ -20,12 +20,6 @@ final class MapViewModel: NSObject, ObservableObject {
     private let manager = CLLocationManager()
     
     // 地図表示位置
-//    @Published var position: MapCameraPosition = .region(
-//        MKCoordinateRegion(
-//            center: CLLocationCoordinate2D(latitude: 32.806241, longitude: 130.765460), // 最初に映る画面に県大
-//            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-//        )
-//    )
     @Published var position: MapCameraPosition = .userLocation(fallback: .region(MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 32.806241, longitude:  130.765460),
         span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
