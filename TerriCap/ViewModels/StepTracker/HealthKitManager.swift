@@ -11,11 +11,8 @@ class HealthKitManager: HealthKitServiceType {
     private let healthStore = HKHealthStore()
     private let stepCountType = HKSampleType.quantityType(forIdentifier: .stepCount)!
 
-    // リアルタイムクエリを保持
     private var liveQuery: HKObserverQuery?
-
     weak var delegate: HealthKitManagerDelegate?
-
     static var shared = HealthKitManager()
     private init() {
 
@@ -29,36 +26,28 @@ class HealthKitManager: HealthKitServiceType {
 
     // MARK: - リアルタイム歩数更新の開始
     func startStepCountUpdates() {
-        // 既存のクエリがあれば停止・クリア
         if let query = liveQuery {
             healthStore.stop(query)
             liveQuery = nil
         }
 
-        // 1. HKObserverQueryを設定
-        // バックグラウンドでデータ更新を監視
         let observerQuery = HKObserverQuery(sampleType: stepCountType, predicate: nil) { [weak self] _, completionHandler, error in
-
             guard let self = self else { return }
-
             if let error = error {
                 print("HealthKit Observer Query Error: \(error.localizedDescription)")
                 completionHandler()
                 return
             }
 
-            // 2. 更新が通知されたら、HKAnchoredObjectQueryで最新データを取得
             self.fetchTodayStepCount { steps in
                 if let steps = steps {
-                    // リアルタイムの歩数をデリゲートに通知
                     self.delegate?.healthKitManager(self, didUpdateNumberOfSteps: steps)
                 }
-                completionHandler() // 処理完了をHealthKitに通知
+                completionHandler()
             }
         }
 
         healthStore.execute(observerQuery)
-        // 初回実行をトリガー
         healthStore.enableBackgroundDelivery(for: stepCountType, frequency: .hourly) { success, error in
             if !success {
                 print("Failed to enable background delivery: \(error?.localizedDescription ?? "unknown")")

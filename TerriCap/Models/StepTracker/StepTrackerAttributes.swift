@@ -11,10 +11,10 @@ import Foundation
 // アプリとウィジェットの両方で共有するデータモデル
 public struct StepTrackerAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        // 動的に更新されるデータ
+
         var steps: Int
+        var activityStatus: String
     }
 
-    // 固定データ
     var title: String
 }
