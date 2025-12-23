@@ -15,30 +15,20 @@ struct SupabaseAuthService {
     private let client = SupabaseManager.shared.client
    
     // サインアップ関数・非同期で実行
-    func signUp(email: String, password: String) async throws -> User {
-        // supabase SDKのサインアップ関数、内部でHTTP POSTを行い、確認メール送信を行なっている
-        let response = try await client.auth.signUp(email:email, password: password)
-        
-        // メールが取得できなければ、エラーを投げる
-        guard let email = response.user.email else {
-            print("DEBUG: No email")
-            throw NSError()
-        }
-        print(response.user)
-        
-        return User(id: response.user.aud, email: email)
+    func signUp(email: String, password: String) async throws {
+        _ = try await client.auth.signUp(
+            email: email,
+            password: password
+            )
     }
     
     // サインイン関数・非同期で実行
-    func signIn(email: String, password: String) async throws -> User {
-        let response = try await client.auth.signIn(email:email, password: password)
-        guard let email = response.user.email else {
-            print("DEBUG: No email")
-            throw NSError()
-        }
-        print(response.user)
-        
-        return User(id: response.user.aud, email: email)
+    func signIn(email: String, password: String) async throws -> Auth.User {
+        let response = try await client.auth.signIn(
+            email: email,
+            password: password
+        )
+        return response.user
     }
     
     // 単にSDKのsignOut関数を呼んでいる・成功したらsession/tokenは無効化
@@ -47,15 +37,9 @@ struct SupabaseAuthService {
     }
     
     // ユーザーがすでにログインしているかどうか
-    func getCurrentUser() async throws -> User? {
-        let supabaseUser = try await client.auth.session.user
-        
-        guard let email = supabaseUser.email else {
-            print("DEBUG: No email")
-            throw NSError()
+    func getCurrentUser() async throws -> Auth.User? {
+            let session = try await client.auth.session
+            return session.user
         }
-        
-        return User(id :supabaseUser.aud, email: email)
-    }
 }
 

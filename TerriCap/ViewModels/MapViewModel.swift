@@ -9,22 +9,6 @@ import MapKit
 import CoreLocation // CLLocationManager を使うために必要
 import Combine
 
-//struct MapItem: Identifiable {
-//    var id = UUID()
-//    var name = ""
-//    var coordinate = CLLocationCoordinate2D()
-//    var occupy: Bool? = nil
-//    var statusColor: Color {
-//        switch self.occupy {
-//        case true:
-//            return .blue
-//        case false:
-//            return .red
-//        case nil:
-//            return .gray
-//        }
-//    }
-//}
 struct userProfile {
     var userAlphabet : String
     var userColor : Color
@@ -36,12 +20,6 @@ final class MapViewModel: NSObject, ObservableObject {
     private let manager = CLLocationManager()
     
     // 地図表示位置
-//    @Published var position: MapCameraPosition = .region(
-//        MKCoordinateRegion(
-//            center: CLLocationCoordinate2D(latitude: 32.806241, longitude: 130.765460), // 最初に映る画面に県大
-//            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-//        )
-//    )
     @Published var position: MapCameraPosition = .userLocation(fallback: .region(MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 32.806241, longitude:  130.765460),
         span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
@@ -125,5 +103,29 @@ extension MapViewModel: CLLocationManagerDelegate {
     // 位置情報の取得に失敗した際に呼び出される
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("位置情報の取得エラー: \(error.localizedDescription)")
+    }
+}
+
+extension StepViewModel {
+
+    struct MapItem: Identifiable {
+        let id: Int
+        let name: String
+        let coordinate: CLLocationCoordinate2D
+        let occupyStatus: OccupyStatus
+
+        var statusColor: Color {
+            switch occupyStatus {
+            case .ownedByMe: return .blue
+            case .ownedByOther: return .red
+            case .notOwned: return .gray
+            }
+        }
+    }
+
+    enum OccupyStatus {
+        case ownedByMe
+        case ownedByOther
+        case notOwned
     }
 }
