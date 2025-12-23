@@ -18,46 +18,45 @@ final class LiveActivityManager {
     private init() {}
 
     // 1. アクティビティを開始する
-    func start(initialSteps: Int) {
-        // すでに実行中のものがあれば終了する（重複防止）
-        if currentActivity != nil {
-            stop()
-        }
-
-        // 表示するデータの初期状態
-        let attributes = StepTrackerAttributes(title: "ウォーキング計測中")
-        let contentState = StepTrackerAttributes.ContentState(steps: initialSteps)
-
-        do {
-            // iOS 16.1以降でのみ実行
-            if #available(iOS 16.1, *) {
-                let activity = try Activity.request(
-                    attributes: attributes,
-                    content: .init(state: contentState, staleDate: nil)
-                )
-                self.currentActivity = activity
-                print("Live Activity Started: \(activity.id)")
+    func start(initialSteps: Int, activityStatus: String) {
+            if currentActivity != nil {
+                stop()
             }
-        } catch {
-            print("Error starting Live Activity: \(error.localizedDescription)")
+
+            let attributes = StepTrackerAttributes(title: "ウォーキング計測中")
+            // activityStatus をセット
+            let contentState = StepTrackerAttributes.ContentState(steps: initialSteps, activityStatus: activityStatus)
+
+            do {
+                if #available(iOS 16.1, *) {
+                    let activity = try Activity.request(
+                        attributes: attributes,
+                        content: .init(state: contentState, staleDate: nil)
+                    )
+                    self.currentActivity = activity
+                    print("Live Activity Started: \(activity.id)")
+                }
+            } catch {
+                print("Error starting Live Activity: \(error.localizedDescription)")
+            }
         }
-    }
 
     // 2. 歩数を更新する
-    func update(steps: Int) {
-        guard let activity = currentActivity else { return }
+    func update(steps: Int, activityStatus: String) {
+            guard let activity = currentActivity else { return }
 
-        let updatedState = StepTrackerAttributes.ContentState(steps: steps)
+            // activityStatus を更新
+            let updatedState = StepTrackerAttributes.ContentState(steps: steps, activityStatus: activityStatus)
 
-        Task {
-            if #available(iOS 16.1, *) {
-                await activity.update(
-                    ActivityContent(state: updatedState, staleDate: nil)
-                )
-                print("Live Activity Updated: \(steps)")
+            Task {
+                if #available(iOS 16.1, *) {
+                    await activity.update(
+                        ActivityContent(state: updatedState, staleDate: nil)
+                    )
+                    print("Live Activity Updated: \(steps), \(activityStatus)")
+                }
             }
         }
-    }
 
     // 3. アクティビティを終了する
     func stop() {

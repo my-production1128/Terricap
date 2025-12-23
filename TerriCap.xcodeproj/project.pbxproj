@@ -413,8 +413,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TerriCap/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "あなたの歩数データを読み取るためにHealthKitを使用します。";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "あなたの歩数を記録するためにHealthKitを使用します。";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "あなたの歩数データとカロリー消費を読み取るためにHealthKitを使用します。";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "あなたの歩数と消費カロリーを記録するためにHealthKitを使用します。";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "現在地の更新時に歩数をチェックし、プッシュ通知を送信するために使用します。";
 				INFOPLIST_KEY_NSMotionUsageDescription = "歩数を読み取ります";
@@ -456,8 +456,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TerriCap/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "あなたの歩数データを読み取るためにHealthKitを使用します。";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "あなたの歩数を記録するためにHealthKitを使用します。";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "あなたの歩数データとカロリー消費を読み取るためにHealthKitを使用します。";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "あなたの歩数と消費カロリーを記録するためにHealthKitを使用します。";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "現在地の更新時に歩数をチェックし、プッシュ通知を送信するために使用します。";
 				INFOPLIST_KEY_NSMotionUsageDescription = "歩数を読み取ります";

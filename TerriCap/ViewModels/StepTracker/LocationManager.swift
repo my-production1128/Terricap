@@ -19,7 +19,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, LocationServiceType 
 
     func setup() {
         locationManger.delegate = self
-        // バックグラウンドでも位置情報更新をONにする
+
         locationManger.allowsBackgroundLocationUpdates = true
         locationManger.pausesLocationUpdatesAutomatically = false
 
@@ -81,12 +81,6 @@ class LocationManager: NSObject, CLLocationManagerDelegate, LocationServiceType 
             let latitude = location.coordinate.latitude
             log += "long \(longitude), lat \(latitude)"
         }
-//        let steps = PedometerManager.shared.numberOfSteps
-        // 歩数が違うときだけプッシュ通知
-//        if steps != _lastNumberOfSteps {
-//            _lastNumberOfSteps = steps
-//            NotificationManager.shared.sendNotification(title: "歩数: \(steps), 位置情報", body: log)
-//        }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

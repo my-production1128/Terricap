@@ -19,7 +19,7 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     @Published var activityText: String = "活動認識待機中..."
     @Published var hkLogText: String = "---"
     @Published var statusText: String = "測定待機中"
-    
+
     @Published var currentLocation: CLLocation?
     @Published var targetLocation: Location?
     @Published var occupyStatusText: String?
@@ -28,7 +28,10 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     @Published var ownedLocationIds: Set<Int> = []
     @Published var otherOwnedLocationIds: Set<Int> = []
 
-    // 距離表示用プロパティ
+    private var initialOffset: Int = 0
+    private var rawTotalSteps: Int = 0
+    private var isMeasuring: Bool = false
+
     var distanceDisplayString: String? {
         guard let userLoc = currentLocation,
               let target = targetLocation else {
@@ -61,7 +64,7 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     private var currentUserId: UUID?
     private var hasTriedOccupy = false
     
-    
+
     init(
         pedometerService: PedometerServiceType,
         locationService: LocationServiceType,
@@ -75,6 +78,7 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         self.pedometerService.delegate = self
         self.locationService.delegate = self
         self.healthKitService.delegate = self
+        self.pedometerService.startUpdates()
     }
     
     func configure(currentUserId: UUID) {
@@ -92,6 +96,7 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
             }
         }
     }
+
     
     // MARK: - 目標設定 (Startボタン押下時に呼ばれる想定)
     func setTargetLocation(_ location: Location) {
@@ -101,15 +106,13 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
             let goal = firstTask.goal_move_value
             self.targetSteps = goal
             print("目標設定: \(goal)歩")
-            
             checkTaskCondition()
-            
         } else {
             self.targetSteps = nil
             print("目標歩数が設定されていません")
         }
     }
-    
+
     // MARK: - 測定開始
     func startMeasurement(target: Location? = nil) {
         stopMeasurement()
@@ -119,14 +122,11 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         }
         print("測定開始")
         self.statusText = "測定中"
-        
-        // 歩数をリセット
+        self.isMeasuring = true
+        self.initialOffset = self.rawTotalSteps
         self.cmLogInt = 0
-        
-        // 判定ロジック初期化
         checkTaskCondition()
-        
-        LiveActivityManager.shared.start(initialSteps: 0)
+        LiveActivityManager.shared.start(initialSteps: 0, activityStatus: self.activityText)
         pedometerService.startUpdates()
         locationService.startUpdateLocation()
         healthKitService.startStepCountUpdates()
@@ -137,34 +137,40 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     func stopMeasurement() {
         print("🛑 測定終了")
         self.statusText = "測定終了"
+        self.isMeasuring = false
         self.cmLogInt = 0
         LiveActivityManager.shared.stop()
-        pedometerService.stopUpdates()
+
         locationService.stopUpdateLocation()
     }
     
     // MARK: - 歩数更新 (CoreMotion)
     func pedometerManager(_ manager: PedometerManager, didUpdateNumberOfSteps steps: NSNumber) {
-        let stepInt = steps.intValue
-        
-        LiveActivityManager.shared.update(steps: stepInt)
-        
+        let totalSteps = steps.intValue
         DispatchQueue.main.async {
-            self.cmLogInt = stepInt
-            // 歩数が更新されるたびに目標達成チェック
-            self.checkTaskCondition()
+            self.rawTotalSteps = totalSteps
+
+            if self.isMeasuring {
+                let sessionSteps = totalSteps - self.initialOffset
+                let displaySteps = max(0, sessionSteps)
+
+                self.cmLogInt = displaySteps
+                LiveActivityManager.shared.update(steps: displaySteps, activityStatus: self.activityText)
+
+                self.checkTaskCondition()
+            }
         }
     }
     
     // MARK: - 達成判定ロジック
     private func checkTaskCondition() {
         guard let target = targetSteps else { return }
-        
-        if cmLogInt >= target {
+
+        if isMeasuring && cmLogInt >= target {
             if !isTaskCleared {
                 isTaskCleared = true
                 statusText = "条件達成！"
-                print("🎉 タスククリア！ 現在:\(cmLogInt) / 目標:\(target)")
+                print("タスククリア 現在:\(cmLogInt) / 目標:\(target)")
             }
             self.checkOccupyStatus()
         } else {
@@ -174,7 +180,12 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     
     // MARK: - その他デリゲートメソッド
     func pedometerManager(_ manager: PedometerManager, didUpdateActivity activity: String) {
-        DispatchQueue.main.async { self.activityText = activity }
+        DispatchQueue.main.async { self.activityText = activity
+
+            if self.isMeasuring {
+                LiveActivityManager.shared.update(steps: self.cmLogInt, activityStatus: activity)
+            }
+        }
     }
     
     func healthKitManager(_ manager: HealthKitServiceType, didUpdateNumberOfSteps steps: Double) {
@@ -193,9 +204,11 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     
     func locationManager(_ manager: LocationServiceType, didUpdateLocation location: CLLocation) {
         DispatchQueue.main.async { self.currentLocation = location
-            self.checkOccupyStatus()
+            if self.isMeasuring {
+                self.checkOccupyStatus()
+            }
         }
-        
+
     }
     
     private func checkOccupyStatus() {
