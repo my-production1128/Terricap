@@ -27,6 +27,7 @@ final class MapViewModel: NSObject, ObservableObject {
     
     // 位置情報の許可ステータスを保持
     @Published var authorizationStatus: CLAuthorizationStatus?
+    @Published var cameraBounds: MapCameraBounds? = nil
     
     // イニシャライザで自身をデリゲートに設定し、権限をリクエストするメソッドを呼び出す
     override init() {
@@ -91,11 +92,19 @@ extension MapViewModel: CLLocationManagerDelegate {
         
         // 取得した現在地に合わせて地図のカメラ位置を更新
         DispatchQueue.main.async {
-            self.position = .region(
-                MKCoordinateRegion(
-                    center: location.coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01) // ズームイン
-                )
+            let region = MKCoordinateRegion(
+                center: location.coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            )
+            self.position = .region(region)
+            let restrictionRegion = MKCoordinateRegion(
+                center: location.coordinate,
+                latitudinalMeters: 2500,
+                longitudinalMeters: 2500
+            )
+            self.cameraBounds = MapCameraBounds(
+                centerCoordinateBounds: restrictionRegion,
+                maximumDistance: 3000
             )
         }
     }
@@ -127,5 +136,14 @@ extension StepViewModel {
         case ownedByMe
         case ownedByOther
         case notOwned
+        
+        var label: String {
+            switch self {
+            case .ownedByMe:    return "今このスポットはあなたが占有しています"
+            case .ownedByOther: return "今このスポットは他の人が占有しています"
+            case .notOwned:     return "今このスポットは誰のものでもありません"
+            }
+        }
     }
+    
 }
