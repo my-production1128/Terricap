@@ -8,6 +8,7 @@ import SwiftUI
 import MapKit
 import CoreLocation // CLLocationManager を使うために必要
 import Combine
+import Supabase
 
 struct userProfile {
     var userAlphabet : String
@@ -18,6 +19,8 @@ final class MapViewModel: NSObject, ObservableObject {
     
     // CoreLocation を使用するためのマネージャ
     private let manager = CLLocationManager()
+    private let client = SupabaseManager.shared.client
+    private var realtimeChannel: RealtimeChannelV2?
     
     // 地図表示位置
     @Published var position: MapCameraPosition = .userLocation(fallback: .region(MKCoordinateRegion(

@@ -5,14 +5,13 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(AuthManager.self) private var authManager
-    @AppStorage("isProfileSetup") private var isProfileSetup = false
 
     var body: some View {
-        Group {
+        NavigationStack {
             if authManager.currentUser == nil {
                 LoginView()
 
-            } else if !isProfileSetup {
+            } else if !authManager.hasProfile {
                 AToZView()
 
             } else {
@@ -24,4 +23,3 @@ struct ContentView: View {
         }
     }
 }
-

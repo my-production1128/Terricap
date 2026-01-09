@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AToZView: View {
-    
+    @Environment(AuthManager.self) private var authManager
     @State private var nickname: String = ""
     @State private var alphabet: String = ""
     @State private var selectColor: Color = .red
@@ -18,7 +18,6 @@ struct AToZView: View {
         .red, .orange, .yellow, .green, .mint, .teal, .cyan, .blue, .indigo, .purple, .pink, .brown, .gray, .black
     ]
     let columns = Array(repeating: GridItem(), count: 7)
-    @AppStorage("isProfileSetup") private var isProfileSetup = false
     
     var body: some View {
         ZStack{
@@ -144,7 +143,7 @@ struct AToZView: View {
             color: selectColor.description
         )
         if success {
-            isProfileSetup = true
+            authManager.hasProfile = true
         }
     }
 }
