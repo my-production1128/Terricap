@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HalfModalView: View {
     let item: Location
+    let occupy: String
     @Environment(\.dismiss) private var dismiss
 
 //    歩数計用
@@ -45,26 +46,18 @@ struct HalfModalView: View {
                         viewModel.startMeasurement(target: item)
                         dismiss()
                     }label: {
-                            Image(systemName: "figure.walk.circle.fill")
-                                .resizable()
-                                .frame(width: 50,height: 50)
-                                .padding(.leading, 4)
-                                .padding(.trailing, 19)
-                                .foregroundStyle(Color.blue)
+                        Image(systemName: "figure.walk.circle.fill")
+                            .resizable()
+                            .frame(width: 50,height: 50)
+                            .padding(.leading, 4)
+                            .padding(.trailing, 19)
+                            .foregroundStyle(Color.blue)
                     }
                 }
                 .padding(.top, 30)
-                VStack{
-//                    if location.occupy == true {
-//                        Text("今このスポットはあなたが占有しています")
-//                    }else if location.occupy == false {
-//                        Text("今このスポットは他の人が占有しています")
-//                    }else{
-//                        Text("今このスポットは誰のものでもありません")
-//                    }
-                }
-                .foregroundStyle(.gray)
-                .padding(.vertical, 12)
+                Text(occupy)
+                    .foregroundStyle(.gray)
+                    .padding(.vertical, 12)
                 HStack{
                     ZStack{
                         Rectangle()

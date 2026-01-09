@@ -18,10 +18,6 @@ struct MapView: View {
     @StateObject private var viewModel: StepViewModel
     @Environment(AuthManager.self) private var authManager
     @Environment(\.scenePhase) private var scenePhase
-    //地図が拡大されているからいらなくなるだろう
-//    @State private var showMarker: Bool = false
-//    private let zoomLevel: Double = 0.02
-    private let cameraBounds = MapCameraBounds(maximumDistance: 2500)
     @State private var selectedLocation: Location? = nil
     @State var istargetLocation = false
     @State private var showingAlert: Bool = false
@@ -42,7 +38,7 @@ struct MapView: View {
     
     var body: some View {
         ZStack{
-            Map(position: $mapViewModel.position, bounds: cameraBounds) {
+            Map(position: $mapViewModel.position, bounds: mapViewModel.cameraBounds) {
                 
                 // 現在地
                 UserAnnotation {
@@ -69,6 +65,7 @@ struct MapView: View {
                         }
                     }
                 }
+                
 
 
                 // Supabase から取得したピン
@@ -95,7 +92,7 @@ struct MapView: View {
 //    ------------------以下ことはちゃん確認お願いします_01---------------------
 //                ForEach(locationViewModel.items) { item in
 //                    Annotation(item.name, coordinate: item.coordinate) {
-//                        if showMarker{
+//
 //                            MarkerView(item: item)
 //                                .contentShape(Rectangle())
 //                                .onTapGesture{
@@ -108,38 +105,12 @@ struct MapView: View {
 //                                        ))
 //                                    }
 //                                }
-//                        } else {
-//                            Circle()
-//                            //                                .fill(item.statusColor)
-//                                .frame(width: 15, height: 15)
-//                                .overlay(
-//                                    Circle()
-//                                        .stroke(.white, lineWidth: 2)
-//                                )
-//                                .transition(.scale.combined(with: .opacity))
-//                                .onTapGesture{
-//                                    //                                    viewModel.setTargetLocation(item)
-//                                    selectedLocation = item
-//                                }
-//                        }
+//                        
 //        ------------------ここまで---------------------
                     }
                     .annotationTitles(.hidden)
                 }
             }
-            
-//            .sheet(item: $selectedLocation){ item in
-//                HalfModalView(item:item, viewModel: self.viewModel, istargetLocation: $istargetLocation)
-//                    .presentationDetents([.fraction(0.45)])
-//                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
-//                    .presentationBackground(.clear)
-//                    .presentationCornerRadius(55)
-//            .onMapCameraChange{ context in
-//                let currentSpan = context.region.span.latitudeDelta
-//                withAnimation(.easeInOut(duration: 0.3)){
-//                    showMarker = currentSpan < zoomLevel
-//                }
-//            }
             //    ------------------以下ことはちゃん確認お願いします_02---------------------
             .sheet(isPresented: Binding(
                 get: {
@@ -150,7 +121,13 @@ struct MapView: View {
                 }
             )){
                 if let item = selectedLocation {
-                    HalfModalView(item:item, viewModel: self.viewModel, istargetLocation: $istargetLocation)
+                    let statusLabel = viewModel.mapItems.first(where: { $0.id == item.id })?.occupyStatus.label ?? ""
+                    
+                    HalfModalView(item:item,
+                                  occupy:statusLabel,
+                                  viewModel: self.viewModel,
+                                  istargetLocation: $istargetLocation
+                    )
                         .presentationDetents([.fraction(0.45)])
                         .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
                         .presentationBackground(.clear)
@@ -288,7 +265,7 @@ struct MapView: View {
                                         .symbolRenderingMode(.palette)
                                         .foregroundStyle(.white, .yellow)
                                     Text("占有範囲に入りました (\(distanceText))")
-                                        .font(.title2)
+                                        .font(.headline)
                                 }
                             } else {
                                 HStack{

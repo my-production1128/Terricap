@@ -40,7 +40,6 @@ struct MarkerView: View {
                             Text("\(item.tasks?.first?.goal_move_value ?? 2000)歩")
                         }
                         HStack{
-                            //🦪🐸かも
                             Image(systemName: "figure.strengthtraining.functional")
                                 .resizable()
                                 .scaledToFit()
