@@ -28,30 +28,20 @@ class AuthManager {
         self.authService = authService
     }
     
-    // MARK: - Sign Up
-    func signUp(email: String, password: String) async {
+    // MARK: - Sign in with Apple
+    func signInWithApple() async {
         do {
-            try await authService.signUp(email: email, password: password)
-            // サインアップ直後は未ログイン扱いでもOK
-            self.currentUser = nil
+            self.currentUser = try await authService.signInWithApple()
+            print("signed in with apple:", currentUser?.id ?? "nil")
+            
+            if currentUser != nil {
+                await checkProfile()
+            }
         } catch {
-            print("signUp error:", error)
+            print("signInWithApple error:", error)
         }
     }
-    
-    // MARK: - Sign In
-    func signIn(email: String, password: String) async {
-        do {
-            self.currentUser = try await authService.signIn(
-                email: email,
-                password: password
-            )
-            print("signed in:", currentUser?.id ?? "nil")
-        } catch {
-            print("signIn error:", error)
-        }
-    }
-    
+
     // MARK: - Sign Out
     func signOut() async {
         do {

@@ -11,7 +11,7 @@
 			<string>terriCapAuth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>terriCapAuth</string>
+				<string>com.runa00.TerriCap</string>
 			</array>
 		</dict>
 	</array>
