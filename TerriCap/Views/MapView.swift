@@ -155,6 +155,7 @@ struct MapView: View {
 
                     let locations = locationViewModel.items
                     await viewModel.refreshOwnershipStates(locations: locations)
+                    await viewModel.checkAndSyncCalories()
                 }
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
@@ -223,6 +224,12 @@ struct MapView: View {
                     }
                 }
                 
+            }
+        }
+        .sheet(isPresented: $viewModel.showCalorieResult) {
+            if let calories = viewModel.lastFetchedCalories {
+                CalorieResultSheet(targetCalories: calories)
+                    .presentationDetents([.medium]) // 半分の高さで表示
             }
         }
         .ignoresSafeArea(edges: [.bottom])

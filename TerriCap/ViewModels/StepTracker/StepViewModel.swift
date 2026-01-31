@@ -28,9 +28,15 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     @Published var ownedLocationIds: Set<Int> = []
     @Published var otherOwnedLocationIds: Set<Int> = []
 
+    @Published var lastFetchedCalories: Double? = nil // 最新で取得できたカロリー
+    @Published var showCalorieResult: Bool = false    // シート表示フラグ
+    private var isCalorieResultShown = false
+
     private var initialOffset: Int = 0
     private var rawTotalSteps: Int = 0
     private var isMeasuring: Bool = false
+
+    private var taskStartTime: Date?
 
     var distanceDisplayString: String? {
         guard let userLoc = currentLocation,
@@ -125,6 +131,7 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         self.isMeasuring = true
         self.initialOffset = self.rawTotalSteps
         self.cmLogInt = 0
+        self.taskStartTime = Date()
         checkTaskCondition()
         LiveActivityManager.shared.start(initialSteps: 0, activityStatus: self.activityText)
         pedometerService.startUpdates()
@@ -138,6 +145,8 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         print("🛑 測定終了")
         self.statusText = "測定終了"
         self.isMeasuring = false
+        finalizeTaskAndSaveLocally()
+
         self.cmLogInt = 0
         LiveActivityManager.shared.stop()
 
@@ -339,4 +348,77 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
             )
         }
     }
+
+    // --- ローカル保存と集計ロジック ---
+    private func finalizeTaskAndSaveLocally() {
+            guard let start = taskStartTime else { return }
+            let end = Date()
+
+            // 1. 累計歩数を更新してUserDefaultsに保存
+            let currentTotalSteps = UserDefaults.standard.integer(forKey: "total_steps_all_time")
+            UserDefaults.standard.set(currentTotalSteps + self.cmLogInt, forKey: "total_steps_all_time")
+
+            // 2. カロリー取得待ちリスト（ログ）を保存
+            let newLog = LocalTaskLog(startTime: start, endTime: end, steps: self.cmLogInt)
+            var logs = fetchLocalLogs()
+            logs.append(newLog)
+            saveLocalLogs(logs)
+
+            // クリア
+            taskStartTime = nil
+        }
+
+        // 12時間経過した過去のタスクからカロリーを取得
+    func checkAndSyncCalories() async {
+
+        if isCalorieResultShown { return }
+
+        var logs = fetchLocalLogs()
+        let now = Date()
+        var updated = false
+        var newlyFetchedTotal: Double = 0.0 // 今回の同期で合計いくら取得できたか
+
+        for i in 0..<logs.count {
+            if !logs[i].isCalorieFetched && now.timeIntervalSince(logs[i].endTime) >= 10800 {
+                if let calories = await HealthKitManager.shared.fetchActiveCalories(from: logs[i].startTime, to: logs[i].endTime) {
+                    let currentCal = UserDefaults.standard.double(forKey: "total_calories_all_time")
+                    UserDefaults.standard.set(currentCal + calories, forKey: "total_calories_all_time")
+
+                    logs[i].isCalorieFetched = true
+                    updated = true
+                    newlyFetchedTotal += calories // 取得分を加算
+                }
+            }
+        }
+
+        if updated {
+            saveLocalLogs(logs)
+            // メインスレッドでUIを更新
+            await MainActor.run {
+                self.lastFetchedCalories = newlyFetchedTotal
+                self.showCalorieResult = true // シートを表示
+                self.isCalorieResultShown = true
+            }
+        } else {
+            // デバッグ用：取得できるデータがなくても0として表示する（完成時はここを消す）
+            await MainActor.run {
+                self.lastFetchedCalories = 0.0
+                self.showCalorieResult = true
+                self.isCalorieResultShown = true
+            }
+        }
+    }
+
+        // ヘルパーメソッド
+        private func fetchLocalLogs() -> [LocalTaskLog] {
+            guard let data = UserDefaults.standard.data(forKey: "pending_task_logs"),
+                  let decoded = try? JSONDecoder().decode([LocalTaskLog].self, from: data) else { return [] }
+            return decoded
+        }
+
+        private func saveLocalLogs(_ logs: [LocalTaskLog]) {
+            if let encoded = try? JSONEncoder().encode(logs) {
+                UserDefaults.standard.set(encoded, forKey: "pending_task_logs")
+            }
+        }
 }

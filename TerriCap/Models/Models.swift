@@ -96,3 +96,12 @@ struct OwnershipHistoryInsert: Encodable {
     let score_value: Int
 }
 
+// Models.swift 等に追加
+struct LocalTaskLog: Codable, Identifiable {
+    var id = UUID()
+    let startTime: Date
+    let endTime: Date
+    let steps: Int
+    var isCalorieFetched: Bool = false
+}
+
