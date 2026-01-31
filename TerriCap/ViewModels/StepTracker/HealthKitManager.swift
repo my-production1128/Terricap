@@ -124,4 +124,25 @@ class HealthKitManager: HealthKitServiceType {
             return nil
         }
     }
+
+    // MARK: - HealthKitManager.swift 内に追加
+    // HealthKitManager.swift 内に追加
+    func fetchActiveCalories(from startDate: Date, to endDate: Date) async -> Double? {
+        let calorieType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+
+        let descriptor = HKStatisticsQueryDescriptor(
+            predicate: HKSamplePredicate.quantitySample(type: calorieType, predicate: predicate),
+            options: .cumulativeSum
+        )
+
+        do {
+            let result = try await descriptor.result(for: healthStore)
+            // 単位をキロカロリー(kcal)で取得
+            return result?.sumQuantity()?.doubleValue(for: .kilocalorie())
+        } catch {
+            print("Calorie Fetch Error: \(error.localizedDescription)")
+            return nil
+        }
+    }
 }
