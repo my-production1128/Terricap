@@ -43,23 +43,29 @@ struct MapView: View {
                 // 現在地
                 UserAnnotation {
                     if let profile = profileViewModel.profile {
-                        let color = Color.colorFromName(profile.color)
-                        let alphabet = profile.alphabet
-
+                        // ★ 一旦対処: colorとalphabetが今のModelにないので、仮の値を使用します
+                        
+                        // 色: とりあえずオレンジ固定（後でロジックを入れるならここ）
+                        let color = Color.orange
+                        
+                        // 文字: 名前があればその頭文字、なければ "U" (User)
+                        let rawName = profile.name ?? "User"
+                        let alphabet = String(rawName.prefix(1)).uppercased()
+                        
                         ZStack {
                             // 外側の丸
                             Circle()
                                 .fill(color)
                                 .frame(width: 31, height: 31)
                                 .shadow(radius: 3)
-
+                            
                             // 内側の白丸
                             Circle()
                                 .fill(Color.white)
                                 .frame(width: 25, height: 25)
-
+                            
                             // アルファベット
-                            Text(alphabet.uppercased())
+                            Text(alphabet)
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundStyle(color)
                         }
@@ -89,29 +95,11 @@ struct MapView: View {
                                 }
                             }
                         }
-//    ------------------以下ことはちゃん確認お願いします_01---------------------
-//                ForEach(locationViewModel.items) { item in
-//                    Annotation(item.name, coordinate: item.coordinate) {
-//
-//                            MarkerView(item: item)
-//                                .contentShape(Rectangle())
-//                                .onTapGesture{
-//                                    withAnimation(.easeOut(duration: 2.0)) {
-//                                        //                                    viewModel.setTargetLocation(item)
-//                                        selectedLocation = item
-//                                        mapViewModel.position = .region(MKCoordinateRegion(
-//                                            center: item.coordinate,
-//                                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-//                                        ))
-//                                    }
-//                                }
-//                        
-//        ------------------ここまで---------------------
+
                     }
                     .annotationTitles(.hidden)
                 }
             }
-            //    ------------------以下ことはちゃん確認お願いします_02---------------------
             .sheet(isPresented: Binding(
                 get: {
                     selectedLocation != nil
@@ -135,7 +123,6 @@ struct MapView: View {
                         .id(item.id)
                         .transition(.identity)
                 }
-                //    ------------------ここまで---------------------
             }
             .ignoresSafeArea(edges: .bottom)
             .mapControls {

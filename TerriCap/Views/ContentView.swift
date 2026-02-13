@@ -12,9 +12,9 @@ struct ContentView: View {
                 LoginView()
 
             } else if !authManager.hasProfile {
-                AToZView()
-
-            } else {
+                GameCenterConnectView()
+            }
+            else {
                 MainTabView()
             }
         }

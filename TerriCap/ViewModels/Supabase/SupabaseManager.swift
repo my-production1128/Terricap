@@ -16,8 +16,8 @@ class SupabaseManager {
     
     private init() {
         // Supabase URLとAnon Keyで置き換え
-        let url = URL(string: "https://ragxleihrerbkpmcehdv.supabase.co")!
-        let key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZ3hsZWlocmVyYmtwbWNlaGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1ODk0MTMsImV4cCI6MjA3OTE2NTQxM30.ULXZ_ExxeSyr64UTQqYREH0WBnhlBb6yikaWX5WWV2k"
+        let url = URL(string: "https://qjgowwlebvnfudoxzxll.supabase.co")!
+        let key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqZ293d2xlYnZuZnVkb3h6eGxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3NTMxNDUsImV4cCI6MjA4NDMyOTE0NX0.WRQo6Z3o0XBrveJpEXd1zLb3-8a0zMjOH-gOWPSI8a8"
         client = SupabaseClient(
                     supabaseURL: url,
                     supabaseKey: key,

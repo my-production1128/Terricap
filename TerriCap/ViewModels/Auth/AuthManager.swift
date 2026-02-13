@@ -69,28 +69,38 @@ class AuthManager {
             hasProfile = false
         }
     }
-
+    
     private func checkProfile() async {
         guard let userId = currentUser?.id else {
             hasProfile = false
             return
         }
-
-        struct Row: Decodable {
-            let id: UUID
+        
+        // 判定用に game_center_id を受け取る構造体
+        struct ProfileCheck: Decodable {
+            let game_center_id: String?
         }
-
+        
         do {
-            let rows: [Row] = try await SupabaseManager.shared.client
+            // game_center_id 列だけを取得する
+            let rows: [ProfileCheck] = try await SupabaseManager.shared.client
                 .from("profiles")
-                .select("id")
+                .select("game_center_id") // idではなくこちらを取得
                 .eq("id", value: userId)
                 .limit(1)
                 .execute()
                 .value
-
-            hasProfile = !rows.isEmpty
-            print("hasProfile:", hasProfile)
+            
+            if let profile = rows.first, profile.game_center_id != nil {
+                // 行が存在し、かつ game_center_id が空ではない場合
+                hasProfile = true
+            } else {
+                // 行がない、または game_center_id が空の場合
+                hasProfile = false
+            }
+            
+            print("checkProfile result: \(hasProfile) (User ID: \(userId))")
+            
         } catch {
             print("checkProfile error:", error)
             hasProfile = false

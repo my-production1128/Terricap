@@ -9,61 +9,48 @@ import Foundation
 import Supabase
 
 final class ProfileRepository {
-
-    private let client = SupabaseManager.shared.client
-
-    func fetchProfile(userId: UUID) async throws -> Profile_Decodable? {
-        let response = try await client
-            .from("profiles")
-            .select()
-            .eq("id", value: userId.uuidString)
-            .execute()
-
-        print("raw response:", String(data: response.data, encoding: .utf8) ?? "nil")
-
-        do {
-                let decoded = try JSONDecoder().decode([Profile_Decodable].self, from: response.data)
-                print(" decoded success:", decoded)
-                return decoded.first
-
-            } catch let error as DecodingError {
-                //  decode エラーを詳細に出す
-                switch error {
-                case .typeMismatch(let type, let context):
-                    print("Type mismatch:", type)
-                    print("codingPath:", context.codingPath)
-                    print("debug:", context.debugDescription)
-
-                case .valueNotFound(let type, let context):
-                    print("Value not found:", type)
-                    print("codingPath:", context.codingPath)
-                    print("debug:", context.debugDescription)
-
-                case .keyNotFound(let key, let context):
-                    print("Key not found:", key)
-                    print("codingPath:", context.codingPath)
-                    print("debug:", context.debugDescription)
-
-                case .dataCorrupted(let context):
-                    print("Data corrupted")
-                    print("codingPath:", context.codingPath)
-                    print("debug:", context.debugDescription)
-
-                @unknown default:
-                    print("Unknown decoding error")
-                }
-
-                throw error
-            }
-    }
-
     
-    // プロフィールを Supabase にupsert
-    func upsertProfile(_ profile: Profile_Codable) async throws {
+    // SupabaseManagerからクライアントをもらう
+    private let client = SupabaseManager.shared.client
+    
+    // MARK: - Fetch (取得)
+        // Profile? (オプショナル) を返すように変更
+        func fetchProfile(userId: UUID) async throws -> Profile? {
+            // .optional() を使うと、データがない場合にエラーにならず nil が返ります
+            let response: PostgrestResponse<Profile?> = try await client // Profile? にする
+                .from("profiles")
+                .select()
+                .eq("id", value: userId)
+                .single() // SDKのバージョンによっては .single() のままでOKな場合と .limit(1).single() が必要な場合があります
+                .execute()
+                
+            // データがなければ nil、あれば Profile が返る
+            return response.value
+        }
+    
+    // MARK: - Update (更新)
+        // Game Center ID を更新（または作成）する
+    func updateGameCenterId(userId: UUID, gameCenterId: String) async throws {
+        
+        // 更新したいデータ
+        // id も一緒に送ることで、行がない場合は insert になります（upsert）
+        struct ProfileUpdate: Encodable {
+            let id: UUID
+            let game_center_id: String
+            let updated_at: Date
+        }
+        
+        let updateData = ProfileUpdate(
+            id: userId,
+            game_center_id: gameCenterId,
+            updated_at: Date()
+        )
+        
         try await client
             .from("profiles")
-            .upsert(profile)
+            .upsert(updateData) // update ではなく upsert に変更！
             .execute()
+        
+        print("Repository: GameCenterIDを保存しました -> \(gameCenterId)")
     }
 }
-
