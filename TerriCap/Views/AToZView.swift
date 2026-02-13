@@ -120,7 +120,7 @@ struct AToZView: View {
                     .padding(.bottom, 40)
                     Button {
                         Task {
-                            await saveProfile()
+//                            await saveProfile()
                         }
                     } label: {
                         Text(viewModel.isSaving ? "保存中…" : "決定")
@@ -136,16 +136,16 @@ struct AToZView: View {
         }
     }
     
-    private func saveProfile() async {
-        let success = await viewModel.saveProfile(
-            name: nickname,
-            alphabet: alphabet,
-            color: selectColor.description
-        )
-        if success {
-            authManager.hasProfile = true
-        }
-    }
+//    private func saveProfile() async {
+//        let success = await viewModel.saveProfile(
+//            name: nickname,
+//            alphabet: alphabet,
+//            color: selectColor.description
+//        )
+//        if success {
+//            authManager.hasProfile = true
+//        }
+//    }
 }
 
 #Preview {

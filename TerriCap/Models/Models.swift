@@ -30,11 +30,17 @@ struct TaskScore: Decodable, Identifiable {
     let created_at: String   // or Date
 }
 
-struct Profile_Decodable: Decodable, Identifiable {
+struct Profile: Codable, Identifiable {
     let id: UUID
-    let name: String
-    let color: String
-    let alphabet: String
+    let game_center_id: String?
+    let name: String?
+    let created_at: Date
+    let updated_at: Date
+//    enum CodingKeys: String, CodingKey {
+//        case id
+//        case gameCenterId = "game_center_id"
+//        case name
+//    }
 }
 
 struct Ownership: Decodable {
@@ -58,14 +64,6 @@ struct TaskProgress: Decodable, Identifiable {
 struct User: Identifiable {
     let id: String
     let email: String
-}
-
-// codableは送信
-struct Profile_Codable: Codable, Identifiable {
-    let id: UUID
-    let name: String
-    let color: String
-    let alphabet: String
 }
 
 struct OwnershipInsert: Encodable {
