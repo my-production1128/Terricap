@@ -8,10 +8,9 @@
 import SwiftUI
 
 struct GameCenterConnectView: View {
-    // ロジックを持つViewModelを所有
-    @State private var viewModel = GameCenterViewModel()
+    @EnvironmentObject var profileViewModel: ProfileViewModel
     
-    // アプリ全体のユーザー状態（リフレッシュ用）
+    // アプリ全体のユーザー状態
     @Environment(AuthManager.self) private var authManager
 
     var body: some View {
@@ -24,27 +23,28 @@ struct GameCenterConnectView: View {
                 .font(.title2.bold())
             
             // 状態に応じたUIの切り替え
-            if viewModel.isSaving {
+            if profileViewModel.isSaving {
                 ProgressView("設定を保存中...")
-            } else if viewModel.isSuccess {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.largeTitle)
-                    .foregroundStyle(.green)
-                Text("連携完了！")
+            } else if profileViewModel.profile?.game_center_id != nil {
+                // 連携済みの表示
+                VStack(spacing: 12) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.largeTitle)
+                        .foregroundStyle(.green)
+                    Text("連携完了！")
+                        .font(.headline)
+                    
+                    Text("あなたのデータは保護されています")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 descriptionView
                 
                 // 連携ボタン
                 Button {
-                    guard let userId = authManager.currentUserId else { return }
-                    
-                    // ViewModelに処理を依頼
-                    viewModel.startConnectionProcess(userId: userId) {
-                        // 完了後の処理 (AuthManagerの更新など)
-                        Task {
-                            await authManager.refreshUser()
-                        }
-                    }
+                    // ViewModelに連携開始を依頼
+                    profileViewModel.startGameCenterConnection()
                 } label: {
                     Text("連携する")
                         .font(.headline)
@@ -58,7 +58,7 @@ struct GameCenterConnectView: View {
             }
             
             // エラー表示
-            if let error = viewModel.errorMessage {
+            if let error = profileViewModel.errorMessage {
                 Text(error)
                     .font(.caption)
                     .foregroundStyle(.red)
@@ -66,16 +66,12 @@ struct GameCenterConnectView: View {
             }
         }
         .padding()
-        // Game Centerログイン画面（シート）の制御
-        .sheet(item: Binding(
-            get: { viewModel.authenticationViewController.map { IdentifiableViewController(vc: $0) } },
-            set: { if $0 == nil { viewModel.authenticationViewController = nil } }
-        )) { wrapper in
+        // 修正：ViewModelの IdentifiableViewController を直接監視するだけ！
+        .sheet(item: $profileViewModel.authViewController) { wrapper in
             GameCenterLoginSheet(viewController: wrapper.vc)
         }
     }
     
-    // 説明文のView（切り出し）
     private var descriptionView: some View {
         Text("歩数バトルに参加するために\nGame Centerアカウントを使用します。")
             .multilineTextAlignment(.center)

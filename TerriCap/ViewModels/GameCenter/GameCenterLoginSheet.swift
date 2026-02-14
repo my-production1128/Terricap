@@ -17,7 +17,6 @@ struct GameCenterLoginSheet: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        // 更新不要
     }
 }
 
