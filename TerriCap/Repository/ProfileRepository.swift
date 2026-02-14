@@ -30,19 +30,21 @@ final class ProfileRepository {
     
     // MARK: - Update (更新)
         // Game Center ID を更新（または作成）する
-    func updateGameCenterId(userId: UUID, gameCenterId: String) async throws {
+    func updateGameCenterId(userId: UUID, gameCenterId: String, name: String = "") async throws {
         
         // 更新したいデータ
         // id も一緒に送ることで、行がない場合は insert になります（upsert）
         struct ProfileUpdate: Encodable {
             let id: UUID
             let game_center_id: String
+            let name: String
             let updated_at: Date
         }
         
         let updateData = ProfileUpdate(
             id: userId,
             game_center_id: gameCenterId,
+            name: name,
             updated_at: Date()
         )
         
@@ -54,3 +56,4 @@ final class ProfileRepository {
         print("Repository: GameCenterIDを保存しました -> \(gameCenterId)")
     }
 }
+

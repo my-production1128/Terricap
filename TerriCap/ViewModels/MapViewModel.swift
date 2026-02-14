@@ -9,7 +9,6 @@ import MapKit
 import CoreLocation // CLLocationManager を使うために必要
 import Combine
 import Supabase
-import GameKit
 
 struct userProfile {
     var userAlphabet : String
@@ -68,27 +67,6 @@ final class MapViewModel: NSObject, ObservableObject {
             break
         }
     }
-    
-    
-    func loadUserAvatar() async {
-            let player = GKLocalPlayer.local
-            
-            // 認証されているか確認
-            guard player.isAuthenticated else { return }
-            
-            do {
-                // .normal (標準サイズ) または .small (小さいサイズ) を選べます
-                let image = try await player.loadPhoto(for: .normal)
-                
-                // メインスレッドで画像を更新
-                await MainActor.run {
-                    self.userAvatar = image
-                }
-                print("アバター画像の取得成功！")
-            } catch {
-                print("アバター画像の取得失敗: \(error)")
-            }
-        }
 }
 
 

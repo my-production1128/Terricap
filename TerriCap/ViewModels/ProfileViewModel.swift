@@ -5,95 +5,99 @@
 //  Created by 末廣月渚 on 2025/12/11.
 //
 //
-//  ProfileViewModel.swift
-//  TerriCap
-//
 import Combine
 import Foundation
 import SwiftUI
 import Supabase
+import GameKit
 
 @MainActor
 final class ProfileViewModel: ObservableObject {
-    
-    // MARK: - Published (画面に反映されるデータ)
     @Published var profile: Profile?
-    @Published var isSaving = false        // ボタンのグルグル用
-    @Published var isLoading = false       // 初回読み込み用
-    @Published var errorMessage: String?   // エラー表示用
-    @Published var showSuccessAlert = false // 成功アラート用
+    @Published var avatarImage: UIImage?
+    @Published var isSaving = false
+    @Published var errorMessage: String?
     
-    // MARK: - Dependencies (機能パーツ)
-    private let repository: ProfileRepository
+    // Appleのログイン画面を出すための変数
+    @Published var authViewController: IdentifiableViewController?
 
-    init(repository: ProfileRepository? = nil) {
-        if let repository {
-            self.repository = repository
-        } else {
-            self.repository = ProfileRepository()
-        }
+    private let repository = ProfileRepository()
+
+    // 1. プロフィールと画像を最新にする（MapのonAppearなどで呼ぶ）
+    func refreshAll() async {
+        await fetchProfile()
+        await refreshAvatar()
     }
-    
-    // MARK: - Functions
-    
-    /// プロフィール情報を取得する
-    func fetchProfile() async {
-        isLoading = true
-        defer { isLoading = false } // 処理が終わったら必ずfalseにする
-        
+
+    // 2. 画像だけを最新にする（アプリに戻ってきた時などに呼ぶ）
+    func refreshAvatar() async {
         do {
-            // ログイン中のユーザーIDを取得
-            guard let user = SupabaseManager.shared.client.auth.currentUser else {
-                return
+            if let image = try await GameCenterManager.shared.fetchAvatar() {
+                self.avatarImage = image
             }
-            
-            // リポジトリからデータ取得
-            let fetchedProfile = try await repository.fetchProfile(userId: user.id)
-            self.profile = fetchedProfile
-            
         } catch {
-            print("Fetch Error: \(error)")
+            print("dbg: アイコン取得失敗: \(error)")
         }
     }
-    
-    /// Game Centerと連携する（ボタンから呼ばれる）
-    func linkGameCenter() async {
-        // 1. Supabaseログインチェック
-        guard let user = SupabaseManager.shared.client.auth.currentUser else {
-            self.errorMessage = "Supabaseにログインしていません"
+
+    // 3. Game Center連携を開始する
+    func startGameCenterConnection() {
+        GameCenterManager.shared.localPlayer.authenticateHandler = { [weak self] vc, error in
+            Task { @MainActor in
+                if let vc = vc {
+                    // ログイン画面が必要なら表示用変数に入れる
+                    self?.authViewController = IdentifiableViewController(vc: vc)
+                } else if GameCenterManager.shared.localPlayer.isAuthenticated {
+                    // 認証成功したら、Supabaseへ保存して画像も更新
+                    await self?.saveGameCenterID()
+                    await self?.refreshAvatar()
+                } else if let error = error {
+                    self?.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    // 4. SupabaseにIDを保存
+    private func saveGameCenterID() async {
+        guard !isSaving else {
+            print("保存処理中なのでスキップしました")
             return
         }
         
-        isSaving = true
-        errorMessage = nil // エラーリセット
-        
-        do {
-            // 2. Game Centerの認証 & ID取得
-            // (シミュレーターだとここでエラーになることが多いので実機推奨)
-            // TODO: Inject a GameCenterService dependency and call it here to fetch the player ID.
-            // let gcId = try await gameCenterService.authenticateAndFetchPlayerID()
-            // Temporary placeholder to keep build green until GameCenterService is provided:
-            struct MissingGameCenterServiceError: Error {}
-            throw MissingGameCenterServiceError()
-            
-            // print("Game Center ID取得成功: \(gcId)")
-            
-            // 3. SupabaseにIDを保存
-            // try await repository.updateGameCenterId(userId: user.id, gameCenterId: gcId)
-            
-            // 4. 成功したらプロフィールを再取得して画面を更新
-            // await fetchProfile()
-            
-            // 成功アラートを出す
-            // self.showSuccessAlert = true
-            // print("連携成功！")
-            
-        } catch {
-            self.errorMessage = "連携に失敗しました: \(error.localizedDescription) (GameCenterService not wired)"
-            print("Link Error: \(error)")
+        if let currentProfile = profile, currentProfile.game_center_id != nil {
+            print("既に連携済みのため、supabaseへの保存をスキップしました")
+            return
         }
         
+        guard let user = SupabaseManager.shared.client.auth.currentUser else { return }
+        let gcID = GameCenterManager.shared.localPlayer.teamPlayerID
+        let gcName = GameCenterManager.shared.localPlayer.alias
+        isSaving = true
+        
+        do {
+            try await repository.updateGameCenterId(userId: user.id, gameCenterId: gcID, name: gcName)
+            
+            await fetchProfile() // DB情報を最新に
+        } catch {
+            self.errorMessage = "保存失敗: \(error.localizedDescription)"
+        }
         isSaving = false
+    }
+
+    func fetchProfile() async {
+        guard let user = SupabaseManager.shared.client.auth.currentUser else { return }
+        self.profile = try? await repository.fetchProfile(userId: user.id)
+        
+        if let p = self.profile {
+            print("\n============  データ取得成功  ============")
+            print(" 名前　　: \(p.name ?? "未設定")")
+            print(" 最初の値　: \(p.first_value)")    // 0.00〜1.00
+            print(" 回復率　: \(p.second_value)") // 0.00〜1.00
+            print("==========================================\n")
+        } else {
+            print("プロフィールが見つかりませんでした（まだ作成されていない可能性があります）")
+        }
     }
 }
 
