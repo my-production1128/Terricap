@@ -131,6 +131,26 @@ struct MapView: View {
                 profileViewModel.startGameCenterConnection()
                 viewModel.configure(currentUserId: userId)
                 viewModel.setup()
+                
+                
+                LocationManager.shared.setup()
+                LocationManager.shared.startUpdateLocation()
+                
+                // ★ 追加：現在地が取得できたら公園を検索して Supabase へ保存
+                if let userCoord = LocationManager.shared.locationManger.location?.coordinate {
+                    ParkSearchService.shared.searchAndSave(at: userCoord)
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if let coord = LocationManager.shared.locationManger.location?.coordinate {
+                        ParkSearchService.shared.searchAndSave(at: coord)
+                    } else {
+                        print("DEBUG: まだ現在地が取得できていません")
+                    }
+                }
+
+                
+                
 
                 Task {
                     await locationViewModel.fetchLocations()

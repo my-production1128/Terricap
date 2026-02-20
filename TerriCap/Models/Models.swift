@@ -21,6 +21,19 @@ struct Location: Decodable, Identifiable {
     }
 }
 
+struct ParkUploadData: Encodable {
+    let name: String
+    let latitude: Double
+    let longitude: Double
+    let place_id: String?
+    
+    
+    var coordinate: CLLocationCoordinate2D {
+        .init(latitude: latitude, longitude: longitude)
+    }
+}
+
+
 struct TaskScore: Decodable, Identifiable {
     let id: Int
     let location_id: Int
