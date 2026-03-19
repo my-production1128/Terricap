@@ -293,7 +293,7 @@ struct MapView: View {
                 }
             }
         }
-        }
+//        }
         .sheet(isPresented: $viewModel.showCalorieResult) {
             if let calories = viewModel.lastFetchedCalories {
                 CalorieResultSheet(targetCalories: calories)

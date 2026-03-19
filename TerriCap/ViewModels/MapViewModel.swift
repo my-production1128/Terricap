@@ -106,12 +106,12 @@ extension MapViewModel: CLLocationManagerDelegate {
             self.position = .region(region)
             let restrictionRegion = MKCoordinateRegion(
                 center: location.coordinate,
-                latitudinalMeters: 20000,
-                longitudinalMeters: 20000
+                latitudinalMeters: 2500,
+                longitudinalMeters: 2500
             )
             self.cameraBounds = MapCameraBounds(
                 centerCoordinateBounds: restrictionRegion,
-                maximumDistance: 20000
+                maximumDistance: 3000
             )
         }
     }
