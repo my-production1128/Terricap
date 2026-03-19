@@ -10,10 +10,9 @@ import CoreLocation
 import Supabase
 
 struct MapView: View {
+    @EnvironmentObject var profileViewModel: ProfileViewModel
     // 現在地用（カメラ位置）
     @StateObject private var mapViewModel = MapViewModel()
-    @StateObject private var profileViewModel = ProfileViewModel()
-    // Supabase のピン
     @StateObject private var locationViewModel = LocationViewModel()
     @StateObject private var viewModel: StepViewModel
     @Environment(AuthManager.self) private var authManager
@@ -43,36 +42,33 @@ struct MapView: View {
                 // 現在地
                 UserAnnotation {
                     if let profile = profileViewModel.profile {
-                        // ★ 一旦対処: colorとalphabetが今のModelにないので、仮の値を使用します
-                        
-                        // 色: とりあえずオレンジ固定（後でロジックを入れるならここ）
-                        let color = Color.orange
-                        
-                        // 文字: 名前があればその頭文字、なければ "U" (User)
-                        let rawName = profile.name ?? "User"
-                        let alphabet = String(rawName.prefix(1)).uppercased()
                         
                         ZStack {
-                            // 外側の丸
+                            // 背景の装飾（必要に応じて）
                             Circle()
-                                .fill(color)
-                                .frame(width: 31, height: 31)
+                                .fill(.white)
+                                .frame(width: 40, height: 40)
                                 .shadow(radius: 3)
-                            
-                            // 内側の白丸
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 25, height: 25)
-                            
-                            // アルファベット
-                            Text(alphabet)
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(color)
+
+                            // ここにGameCenterのアイコンを表示
+                            // 仮に profileViewModel などで取得した画像を表示する場合
+                            if let avatarImage = profileViewModel.avatarImage { // 取得済み画像がある場合
+                                Image(uiImage: avatarImage)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 36, height: 36)
+                                    .clipShape(Circle())
+                            } else {
+                                // 画像がない場合のフォールバック（GameCenter風のデフォルトアイコン）
+                                Image(systemName: "person.crop.circle.fill")
+                                    .resizable()
+                                    .frame(width: 36, height: 36)
+                                    .foregroundStyle(.gray)
+                            }
                         }
                     }
                 }
                 
-
 
                 // Supabase から取得したピン
                 ForEach(viewModel.mapItems) { mapItem in
@@ -132,9 +128,29 @@ struct MapView: View {
             .onAppear {
                 mapViewModel.checkAndRequestLocationPermission()
                 guard let userId = authManager.currentUserId else { return }
-
+                profileViewModel.startGameCenterConnection()
                 viewModel.configure(currentUserId: userId)
                 viewModel.setup()
+                
+                
+                LocationManager.shared.setup()
+                LocationManager.shared.startUpdateLocation()
+                
+                // ★ 追加：現在地が取得できたら公園を検索して Supabase へ保存
+                if let userCoord = LocationManager.shared.locationManger.location?.coordinate {
+                    ParkSearchService.shared.searchAndSave(at: userCoord)
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if let coord = LocationManager.shared.locationManger.location?.coordinate {
+                        ParkSearchService.shared.searchAndSave(at: coord)
+                    } else {
+                        print("DEBUG: まだ現在地が取得できていません")
+                    }
+                }
+
+                
+                
 
                 Task {
                     await locationViewModel.fetchLocations()
@@ -143,12 +159,17 @@ struct MapView: View {
                     let locations = locationViewModel.items
                     await viewModel.refreshOwnershipStates(locations: locations)
                     await viewModel.checkAndSyncCalories()
+                    await profileViewModel.refreshAvatar()
                 }
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if newPhase == .active {
                     print("dbg App came to foreground. Fetching latest HealthKit steps.")
                     viewModel.fetchLatestHealthKitSteps()
+                    
+                    Task {
+                        await profileViewModel.refreshAvatar()
+                    }
                 }
             }
             .ignoresSafeArea(edges: [.bottom])
@@ -212,7 +233,26 @@ struct MapView: View {
                 }
                 
             }
-
+        }
+        .sheet(item: $profileViewModel.authViewController) { item in
+            GameCenterLoginSheet(viewController: item.vc)
+        }
+        .sheet(isPresented: $viewModel.showCalorieResult) {
+            if let calories = viewModel.lastFetchedCalories {
+                CalorieResultSheet(targetCalories: calories)
+                    .presentationDetents([.medium]) // 半分の高さで表示
+            }
+        }
+        .ignoresSafeArea(edges: [.bottom])
+        .alert("確認", isPresented: $showingAlert){
+            Button("いいえ", role: .cancel){}
+            Button("はい"){
+                istargetLocation = false
+                viewModel.stopMeasurement()
+            }
+        } message: {
+            Text("現在の測定内容を破棄しますか？")
+        }
 
         
         HStack{

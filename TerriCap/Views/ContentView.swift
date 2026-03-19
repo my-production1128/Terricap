@@ -13,8 +13,7 @@ struct ContentView: View {
 
             } else if !authManager.hasProfile {
                 GameCenterConnectView()
-            }
-            else {
+            } else {
                 MainTabView()
             }
         }
@@ -70,3 +69,4 @@ struct MainTabView: View {
         }
     }
 }
+

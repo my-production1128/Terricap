@@ -21,6 +21,19 @@ struct Location: Decodable, Identifiable {
     }
 }
 
+struct ParkUploadData: Encodable {
+    let name: String
+    let latitude: Double
+    let longitude: Double
+    let place_id: String?
+    
+    
+    var coordinate: CLLocationCoordinate2D {
+        .init(latitude: latitude, longitude: longitude)
+    }
+}
+
+
 struct TaskScore: Decodable, Identifiable {
     let id: Int
     let location_id: Int
@@ -36,11 +49,8 @@ struct Profile: Codable, Identifiable {
     let name: String?
     let created_at: Date
     let updated_at: Date
-//    enum CodingKeys: String, CodingKey {
-//        case id
-//        case gameCenterId = "game_center_id"
-//        case name
-//    }
+    let first_value: Double
+    let second_value: Double
 }
 
 struct Ownership: Decodable {
@@ -59,11 +69,6 @@ struct TaskProgress: Decodable, Identifiable {
     let user_id: UUID
     let move_progress: Int8
     let spot_progress: Int8
-}
-
-struct User: Identifiable {
-    let id: String
-    let email: String
 }
 
 struct OwnershipInsert: Encodable {

@@ -10,10 +10,13 @@ import SwiftUI
 @main
 struct TerriCapApp: App {
     @State private var authManager = AuthManager()
+    @StateObject private var profileViewModel = ProfileViewModel()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(authManager)
+                .environmentObject(profileViewModel)
         }
     }
 }
