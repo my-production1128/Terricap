@@ -29,10 +29,12 @@ struct MainTabView: View {
     @State private var selectedTab: Tab = .map
 
     enum Tab {
-            case map,
-                 stats,
-                 account
-        }
+        case map,
+             stats,
+             character,
+             ranking,
+             account
+    }
 
     var body: some View {
         TabView {
@@ -47,6 +49,24 @@ struct MainTabView: View {
                     Label("実績", systemImage: "chart.bar.fill")
                 }
                 .tag(Tab.stats)
+
+            CharacterView()
+                .tabItem {
+                    Label("キャラクター", systemImage: "crown.fill")
+                }
+                .tag(Tab.character)
+
+            RankingView()
+                .tabItem {
+                    Label("ランキング", systemImage: "crown.fill")
+                }
+                .tag(Tab.ranking)
+
+            AccountView()
+                .tabItem {
+                    Label("アカウント", systemImage: "person.crop.circle.fill")
+                }
+                .tag(Tab.account)
         }
     }
 }
