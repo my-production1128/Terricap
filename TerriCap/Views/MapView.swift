@@ -256,19 +256,6 @@ struct MapView: View {
 
         
         HStack{
-            Button {
-                Task {
-                    await authManager.signOut()
-                }
-            } label: {
-                Text("サインアウト")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(width: 120, height: 40)
-                    .background(Color.blue)
-                    .cornerRadius(8)
-                    .padding()
-            }
             if istargetLocation {
                 VStack{
                     if let distanceText = viewModel.distanceDisplayString,
@@ -305,6 +292,23 @@ struct MapView: View {
                     }
                 }
             }
+        }
+        }
+        .sheet(isPresented: $viewModel.showCalorieResult) {
+            if let calories = viewModel.lastFetchedCalories {
+                CalorieResultSheet(targetCalories: calories)
+                    .presentationDetents([.medium]) // 半分の高さで表示
+            }
+        }
+        .ignoresSafeArea(edges: [.bottom])
+        .alert("確認", isPresented: $showingAlert){
+            Button("いいえ", role: .cancel){}
+            Button("はい"){
+                istargetLocation = false
+                viewModel.stopMeasurement()
+            }
+        } message: {
+            Text("現在の測定内容を破棄しますか？")
         }
     }
 }
