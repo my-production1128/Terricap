@@ -11,21 +11,24 @@ import ActivityKit
 // アプリ本体側でLive Activityを操作するためのクラス
 final class LiveActivityManager {
     static let shared = LiveActivityManager()
-
-    // 現在のアクティビティを保持する変数
     private var currentActivity: Activity<StepTrackerAttributes>?
 
     private init() {}
 
     // 1. アクティビティを開始する
-    func start(initialSteps: Int, activityStatus: String) {
+    func start(initialSteps: Int, targetSteps: Int, distance: String, activityStatus: String) {
             if currentActivity != nil {
                 stop()
             }
 
             let attributes = StepTrackerAttributes(title: "ウォーキング計測中")
             // activityStatus をセット
-            let contentState = StepTrackerAttributes.ContentState(steps: initialSteps, activityStatus: activityStatus)
+        let contentState = StepTrackerAttributes.ContentState(
+                    steps: initialSteps,
+                    targetSteps: targetSteps,
+                    distance: distance,
+                    activityStatus: activityStatus
+                )
 
             do {
                 if #available(iOS 16.1, *) {
@@ -42,11 +45,16 @@ final class LiveActivityManager {
         }
 
     // 2. 歩数を更新する
-    func update(steps: Int, activityStatus: String) {
+    func update(steps: Int, targetSteps: Int, distance: String, activityStatus: String) {
             guard let activity = currentActivity else { return }
 
             // activityStatus を更新
-            let updatedState = StepTrackerAttributes.ContentState(steps: steps, activityStatus: activityStatus)
+        let updatedState = StepTrackerAttributes.ContentState(
+                    steps: steps,
+                    targetSteps: targetSteps,
+                    distance: distance,
+                    activityStatus: activityStatus
+                )
 
             Task {
                 if #available(iOS 16.1, *) {

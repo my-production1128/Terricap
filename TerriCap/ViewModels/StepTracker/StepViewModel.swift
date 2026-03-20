@@ -109,11 +109,16 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         self.targetLocation = location
         self.isTaskCleared = false
         
-        
-        let goal = 2000
-        self.targetSteps = goal
-        print("目標設定: \(goal)歩")
-        checkTaskCondition()
+        if let firstTask = location.taskscores?.first {
+            let goal = firstTask.wlk
+            self.targetSteps = goal
+            print("目標設定: \(goal)歩")
+        } else {
+            // 万が一データがなかった場合の予備（2000歩）
+            self.targetSteps = 2000
+            print("目標歩数が設定されていません。デフォルトの2000歩を設定します。")
+        }
+        evaluateTaskCondition()
     }
 
     // MARK: - 測定開始
@@ -129,8 +134,8 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         self.initialOffset = self.rawTotalSteps
         self.cmLogInt = 0
         self.taskStartTime = Date()
-        checkTaskCondition()
-        LiveActivityManager.shared.start(initialSteps: 0, activityStatus: self.activityText)
+        evaluateTaskCondition()
+        LiveActivityManager.shared.start(initialSteps: 0,targetSteps: 0,distance: "", activityStatus: self.activityText)
         pedometerService.startUpdates()
         locationService.startUpdateLocation()
         healthKitService.startStepCountUpdates()
@@ -160,17 +165,22 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
                 let sessionSteps = totalSteps - self.initialOffset
                 let displaySteps = max(0, sessionSteps)
 
-                self.cmLogInt = displaySteps
-                LiveActivityManager.shared.update(steps: displaySteps, activityStatus: self.activityText)
+                LiveActivityManager.shared.update(steps: displaySteps, targetSteps: self.targetSteps ?? 0, distance: self.distanceDisplayString ?? "", activityStatus: self.activityText)
 
-                self.checkTaskCondition()
+                self.cmLogInt = displaySteps
+
+
+                self.evaluateTaskCondition()
             }
         }
     }
     
     // MARK: - 達成判定ロジック
-    private func checkTaskCondition() {
-        guard let target = targetSteps else { return }
+    private func evaluateTaskCondition(targetSteps: Int? = nil, distance: Double? = nil) {
+        let effectiveTarget = targetSteps ?? self.targetSteps
+        let _ = distance ?? self.rawDistanceToTarget
+
+        guard let target = effectiveTarget else { return }
 
         if isMeasuring && cmLogInt >= target {
             if !isTaskCleared {
@@ -186,10 +196,11 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     
     // MARK: - その他デリゲートメソッド
     func pedometerManager(_ manager: PedometerManager, didUpdateActivity activity: String) {
-        DispatchQueue.main.async { self.activityText = activity
+        DispatchQueue.main.async {
+            self.activityText = activity
 
             if self.isMeasuring {
-                LiveActivityManager.shared.update(steps: self.cmLogInt, activityStatus: activity)
+                LiveActivityManager.shared.update(steps: self.cmLogInt, targetSteps: self.targetSteps ?? 0, distance: self.distanceDisplayString ?? "", activityStatus: activity)
             }
         }
     }
@@ -421,3 +432,4 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
             }
         }
 }
+
