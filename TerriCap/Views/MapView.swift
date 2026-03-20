@@ -11,19 +11,17 @@ import Supabase
 
 struct MapView: View {
     @EnvironmentObject var profileViewModel: ProfileViewModel
+    @StateObject private var parkViewModel = ParkViewModel()
     // 現在地用（カメラ位置）
     @StateObject private var mapViewModel = MapViewModel()
-    @StateObject private var locationViewModel = LocationViewModel()
     @StateObject private var viewModel: StepViewModel
     @Environment(AuthManager.self) private var authManager
     @Environment(\.scenePhase) private var scenePhase
-    @State private var selectedLocation: Location? = nil
+    @State private var selectedPark: ParkUploadData? = nil
     @State var istargetLocation = false
     @State private var showingAlert: Bool = false
     
     init() {
-        _locationViewModel = StateObject(wrappedValue: LocationViewModel())
-
         let vm = StepViewModel(
             pedometerService: PedometerManager.shared,
             locationService: LocationManager.shared,
@@ -69,98 +67,77 @@ struct MapView: View {
                     }
                 }
                 
-
+                
                 // Supabase から取得したピン
-                ForEach(viewModel.mapItems) { mapItem in
-                    Annotation(mapItem.name, coordinate: mapItem.coordinate) {
-
-                        if let location = locationViewModel.items.first(where: { $0.id == mapItem.id }) {
-
-                            MarkerView(
-                                item: location,
-                                statusColor: mapItem.statusColor
-                            )
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                withAnimation(.easeOut(duration: 2.0)) {
-                                    selectedLocation = location
-                                    mapViewModel.position = .region(MKCoordinateRegion(
-                                        center: location.coordinate,
-                                        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-                                    ))
-                                }
+                ForEach(parkViewModel.parks) { park in
+                    Annotation(park.name, coordinate: park.coordinate){
+                        
+                        MarkerView(
+                            park: park,
+                            statusColor: .green
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(.easeOut(duration: 2.0)) {
+                                selectedPark = park
+                                mapViewModel.position = .region(MKCoordinateRegion(
+                                    center: park.coordinate,
+                                    span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                                ))
                             }
                         }
-
                     }
                     .annotationTitles(.hidden)
                 }
             }
-            .sheet(isPresented: Binding(
-                get: {
-                    selectedLocation != nil
-                },
-                set: {
-                    if !$0 { selectedLocation = nil }
-                }
-            )){
-                if let item = selectedLocation {
-                    let statusLabel = viewModel.mapItems.first(where: { $0.id == item.id })?.occupyStatus.label ?? ""
-                    
-                    HalfModalView(item:item,
-                                  occupy:statusLabel,
-                                  viewModel: self.viewModel,
-                                  istargetLocation: $istargetLocation
-                    )
-                        .presentationDetents([.fraction(0.45)])
-                        .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
-                        .presentationBackground(.clear)
-                        .presentationCornerRadius(55)
-                        .id(item.id)
-                        .transition(.identity)
-                }
+            .sheet(item: $selectedPark) { park in
+                HalfModalView(
+                    park: park,
+                    occupy: "占有状況", // ★ひとまず仮置き
+                    viewModel: self.viewModel,
+                    istargetLocation: $istargetLocation
+                )
+                .presentationDetents([.fraction(0.45)])
+                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
+                .presentationBackground(.clear)
+                .presentationCornerRadius(55)
+                .transition(.identity)
             }
             .ignoresSafeArea(edges: .bottom)
             .mapControls {
                 MapUserLocationButton()
                 MapCompass()
             }
-            .onAppear {
+            .task {
+                // 1. 各種セットアップ
                 mapViewModel.checkAndRequestLocationPermission()
+                LocationManager.shared.setup()
+                LocationManager.shared.startUpdateLocation()
+                
                 guard let userId = authManager.currentUserId else { return }
                 profileViewModel.startGameCenterConnection()
                 viewModel.configure(currentUserId: userId)
                 viewModel.setup()
                 
+                // 2. 現在地の取得を少し待つ（LocationManagerの起動待ち）
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒待つ
                 
-                LocationManager.shared.setup()
-                LocationManager.shared.startUpdateLocation()
-                
-                // ★ 追加：現在地が取得できたら公園を検索して Supabase へ保存
                 if let userCoord = LocationManager.shared.locationManger.location?.coordinate {
-                    ParkSearchService.shared.searchAndSave(at: userCoord)
+                    // 周辺の公園を検索 → Supabaseに保存 → 最新の公園リストを取得
+                    await parkViewModel.searchAndSaveParks(at: userCoord)
+                } else {
+                    print("DEBUG: まだ現在地が取得できていません")
+                    // 位置情報が取れなくても、とりあえずDBに入っている公園は表示しておく
+                    await parkViewModel.fetchParks()
                 }
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    if let coord = LocationManager.shared.locationManger.location?.coordinate {
-                        ParkSearchService.shared.searchAndSave(at: coord)
-                    } else {
-                        print("DEBUG: まだ現在地が取得できていません")
-                    }
-                }
-
-                
-                
-
-                Task {
-                    await locationViewModel.fetchLocations()
-                    await profileViewModel.fetchProfile()
-
-                    let locations = locationViewModel.items
-                    await viewModel.refreshOwnershipStates(locations: locations)
-                    await viewModel.checkAndSyncCalories()
-                    await profileViewModel.refreshAvatar()
-                }
+                // 4. その他の更新処理
+                await profileViewModel.fetchProfile()
+                // ※viewModel(StepViewModel)側の更新処理は、parkViewModel.parks に合わせて後で修正が必要です
+                // let locations = locationViewModel.items
+                // await viewModel.refreshOwnershipStates(locations: locations)
+                await viewModel.checkAndSyncCalories()
+                await profileViewModel.refreshAvatar()
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if newPhase == .active {
@@ -308,25 +285,25 @@ struct MapView: View {
         }
     }
 }
-
-extension Color {
-    static func colorFromName(_ name: String) -> Color {
-        switch name.lowercased() {
-        case "red":      return .red
-        case "orange":   return .orange
-        case "yellow":   return .yellow
-        case "green":    return .green
-        case "teal":     return .teal
-        case "cyan":     return .cyan
-        case "blue":     return .blue
-        case "indigo":   return .indigo
-        case "purple":   return .purple
-        case "pink":     return .pink
-        case "brown":    return .brown
-        case "gray":     return .gray
-        case "black":    return .black
-        default:
-            return .orange
-        }
-    }
-}
+//
+//extension Color {
+//    static func colorFromName(_ name: String) -> Color {
+//        switch name.lowercased() {
+//        case "red":      return .red
+//        case "orange":   return .orange
+//        case "yellow":   return .yellow
+//        case "green":    return .green
+//        case "teal":     return .teal
+//        case "cyan":     return .cyan
+//        case "blue":     return .blue
+//        case "indigo":   return .indigo
+//        case "purple":   return .purple
+//        case "pink":     return .pink
+//        case "brown":    return .brown
+//        case "gray":     return .gray
+//        case "black":    return .black
+//        default:
+//            return .orange
+//        }
+//    }
+//}

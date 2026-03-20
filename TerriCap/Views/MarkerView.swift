@@ -10,7 +10,7 @@ import CoreLocation
 
 struct MarkerView: View {
     
-    let item: Location
+    let park: ParkUploadData
     let statusColor: Color
     
     var body: some View {
@@ -37,15 +37,7 @@ struct MarkerView: View {
                                 .scaledToFit()
                                 .frame(width: 15, height: 15)
                                 .padding(-3)
-                            Text("\(item.tasks?.first?.goal_move_value ?? 2000)歩")
-                        }
-                        HStack{
-                            Image(systemName: "figure.strengthtraining.functional")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 15, height: 15)
-                                .padding(-3)
-                            Text("\(item.tasks?.first?.goal_spot_value ?? 200)kcal")
+                           Text("\(park.taskscores?.first?.wlk ?? 2000)")
                         }
                     }
                     .foregroundColor(.black.opacity(0.8))
@@ -57,7 +49,3 @@ struct MarkerView: View {
         }
     }
 }
-//
-//#Preview {
-//    MarkerView(item: Location(id: 222222, name: "熊本県立大学", latitude: 100, longitude: 100, tasks: []))
-//}
