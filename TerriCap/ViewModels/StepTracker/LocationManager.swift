@@ -83,7 +83,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, LocationServiceType 
         guard let location = locations.last else { return }
    
         //--------------------------------
-        // ★ 追加:移動距離判定
+        // ★ 追加:移動距離判定(ここ要検討)
         let shouldSearch: Bool
         if let lastLocation = lastSearchLocation {
             // 前回検索した場所からの距離（メートル）を計算
@@ -97,7 +97,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, LocationServiceType 
         
         if shouldSearch {
             print("[AUTO SCAN] \(Int(searchThreshold))m以上移動したため、公園検索を実行します。")
-            ParkSearchService.shared.searchAndSave(at: location.coordinate)
+            ParkRepository.shared.searchAndSave(at: location.coordinate)
             // 今の場所を「最後に検索した場所」として記憶
             lastSearchLocation = location
         }

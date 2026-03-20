@@ -21,7 +21,7 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     @Published var statusText: String = "測定待機中"
 
     @Published var currentLocation: CLLocation?
-    @Published var targetLocation: Location?
+    @Published var targetLocation: ParkUploadData?
     @Published var occupyStatusText: String?
     // 占有状況把握のための以下三つ
     @Published var mapItems: [MapItem] = []
@@ -105,22 +105,24 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
 
     
     // MARK: - 目標設定 (Startボタン押下時に呼ばれる想定)
-    func setTargetLocation(_ location: Location) {
+    func setTargetLocation(_ location: ParkUploadData) {
         self.targetLocation = location
         self.isTaskCleared = false
-        if let firstTask = location.tasks?.first {
-            let goal = firstTask.goal_move_value
+        
+        if let firstTask = location.taskscores?.first {
+            let goal = firstTask.wlk
             self.targetSteps = goal
             print("目標設定: \(goal)歩")
-            evaluateTaskCondition()
         } else {
-            self.targetSteps = nil
-            print("目標歩数が設定されていません")
+            // 万が一データがなかった場合の予備（2000歩）
+            self.targetSteps = 2000
+            print("目標歩数が設定されていません。デフォルトの2000歩を設定します。")
         }
+        evaluateTaskCondition()
     }
 
     // MARK: - 測定開始
-    func startMeasurement(target: Location? = nil) {
+    func startMeasurement(target: ParkUploadData? = nil) {
         stopMeasurement()
         hasTriedOccupy = false
         if let location = target {
@@ -247,8 +249,8 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
             let distance = rawDistanceToTarget,
             distance <= 150,
             isTaskCleared,
-            let location = targetLocation,
-            let task = location.tasks?.first
+            let location = targetLocation
+//            let task = location.tasks?.first
         else {
             print("guard failed (not ready to occupy)")
             return
@@ -261,9 +263,9 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         Task {
             do {
                 let result = try await ownershipRepository.tryOccupyLocation(
-                    locationId: location.id,
+                    locationId: 0,
                     userId: userId,
-                    taskId: task.id,
+                    taskId: 0,
                     scoreType: "steps",
                     scoreValue: cmLogInt
                 )
@@ -301,7 +303,7 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     }
     
     @MainActor
-    func refreshOwnershipStates(locations: [Location]) async {
+    func refreshOwnershipStates(locations: [ParkUploadData]) async {
         guard
             let ownershipRepository,
             let userId = currentUserId
@@ -331,30 +333,32 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
 
     
     func buildMapItems(
-        locations: [Location],
+        locations: [ParkUploadData],
         ownedLocationIds: Set<Int>,
         otherOwnedLocationIds: Set<Int>
     ) {
         mapItems = locations.map { location in
             let status: OccupyStatus
-
-            if ownedLocationIds.contains(location.id) {
-                status = .ownedByMe
-            } else if otherOwnedLocationIds.contains(location.id) {
-                status = .ownedByOther
-            } else {
-                status = .notOwned
-            }
-
+            
+            /*
+             if ownedLocationIds.contains(location.id) {
+             status = .ownedByMe
+             } else if otherOwnedLocationIds.contains(location.id) {
+             status = .ownedByOther
+             } else {
+             status = .notOwned
+             }
+             */
+            status = .notOwned // ひとまずすべて「未占有」として扱う
             return MapItem(
-                id: location.id,
+                id: 0,
                 name: location.name,
                 coordinate: location.coordinate,
                 occupyStatus: status
             )
         }
     }
-
+    
     // --- ローカル保存と集計ロジック ---
     private func finalizeTaskAndSaveLocally() {
             guard let start = taskStartTime else { return }
