@@ -7,15 +7,6 @@
 
 import Foundation
 
-//struct TaskScore: Decodable, Identifiable {
-//    let id: Int
-//    let location_id: Int
-//    let goal_move_value: Int
-//    let goal_spot_value: Int
-//    let goal_point_value: Int
-//    let created_at: String   // or Date
-//}
-
 struct ParkTask: Codable {
     var id: Int?
     var spot_id: Int

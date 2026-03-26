@@ -129,6 +129,7 @@ extension StepViewModel {
         let name: String
         let coordinate: CLLocationCoordinate2D
         let occupyStatus: OccupyStatus
+        let park: ParkUploadData
 
         var statusColor: Color {
             switch occupyStatus {
@@ -144,11 +145,11 @@ extension StepViewModel {
         case ownedByOther
         case notOwned
         
-        var label: String {
+        var color: Color {
             switch self {
-            case .ownedByMe:    return "今このスポットはあなたが占有しています"
-            case .ownedByOther: return "今このスポットは他の人が占有しています"
-            case .notOwned:     return "今このスポットは誰のものでもありません"
+            case .ownedByMe:    return .blue   // 自分の陣地
+            case .ownedByOther: return .red    // 他人の陣地
+            case .notOwned:     return .gray   // 未占有
             }
         }
     }
