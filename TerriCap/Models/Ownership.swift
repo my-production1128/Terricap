@@ -7,41 +7,53 @@
 
 import Foundation
 
+// MARK: - 取得用 (Select)
 struct Ownership: Decodable {
     let id: Int
-    let location_id: Int
+    let spot_id: Int
     let user_id: UUID
-    let task_id: Int
-    let score_type: String
+    let taskscore_id: Int
     let score_value: Int
+    var occupied_count: Int?
     let occupied_at: Date
-    let updated_at: Date
+    let update_at: Date
 }
 
-struct OwnershipInsert: Encodable {
-    let location_id: Int
-    let user_id: UUID
-    let task_id: Int
-    let score_type: String
+struct OwnershipHistory: Encodable {
+    let id: Int
+    let spot_id: Int
+    let winner_user_id: UUID
+    let loser_user_id: UUID?
+    let taskscore_id: Int
     let score_value: Int
-    let occupied_at: Date
-    let updated_at: Date
+    let created_at: String
+}
+
+struct OwnershipHistoryLite: Decodable {
+    let winner_user_id: UUID
+    let score_value: Int
+    let created_at: Date
+}
+
+// MARK: - 送信用 (Insert / Update)
+struct OwnershipInsert: Encodable {
+    let spot_id: Int
+    let user_id: UUID
+    let taskscore_id: Int
+    let score_value: Int
 }
 
 struct OwnershipUpdate: Encodable {
     let user_id: UUID
-    let task_id: Int
-    let score_type: String
+    let taskscore_id: Int
     let score_value: Int
-    let occupied_at: Date
-    let updated_at: Date
+    let update_at: Date
 }
 
 struct OwnershipHistoryInsert: Encodable {
-    let location_id: Int
+    let spot_id: Int
     let winner_user_id: UUID
     let loser_user_id: UUID?
-    let task_id: Int
-    let score_type: String
+    let taskscore_id: Int
     let score_value: Int
 }

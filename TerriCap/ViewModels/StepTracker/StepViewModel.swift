@@ -8,6 +8,7 @@ import Foundation
 import Combine
 import CoreLocation
 import Supabase
+import SwiftUI
 
 class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, HealthKitManagerDelegate, LocationServiceDelegate {
     
@@ -27,11 +28,13 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     @Published var mapItems: [MapItem] = []
     @Published var ownedLocationIds: Set<Int> = []
     @Published var otherOwnedLocationIds: Set<Int> = []
-
+    @Published var isOccupying: Bool = false // 通信中フラグ
     @Published var lastFetchedCalories: Double? = nil // 最新で取得できたカロリー
     @Published var showCalorieResult: Bool = false    // シート表示フラグ
     private var isCalorieResultShown = false
 
+    private var realtimeTask: Task<Void, Never>?
+    
     private var initialOffset: Int = 0
     private var rawTotalSteps: Int = 0
     private var isMeasuring: Bool = false
@@ -229,57 +232,74 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     }
     
     private func checkOccupyStatus() {
-        // ---- デバッグログ ----
-        print("---- checkOccupyStatus ----")
-        print("rawDistance:", rawDistanceToTarget ?? -1)
-        print("isTaskCleared:", isTaskCleared)
-        print("hasTriedOccupy:", hasTriedOccupy)
-        print("currentUserId:", currentUserId as Any)
-        print("targetLocation:", targetLocation as Any)
-        
-        // ---- 二重実行防止 ----
-        if hasTriedOccupy {
-            return
-        }
-        
-        // ---- 占有可能かの前提条件 ----
+        // すでに占有処理が完了している、または現在通信中なら即座に抜ける
+        guard !hasTriedOccupy && !isOccupying else { return }
+
         guard
-            let ownershipRepository,
+            let ownershipRepository = ownershipRepository,
             let userId = currentUserId,
             let distance = rawDistanceToTarget,
-            distance <= 150,
+            distance <= 300,
             isTaskCleared,
-            let location = targetLocation
-//            let task = location.tasks?.first
+            let location = targetLocation,
+            let task = location.taskscores?.first,
+            let taskId = task.id
         else {
-            print("guard failed (not ready to occupy)")
             return
         }
+
+        let realLocationId = task.spot_id
         
-        // ---- 状態確定 ----
-        print("occupy try start")
-        
-        // ---- 占有処理 ----
+        // ---- ここで即座にロックをかける ----
+        isOccupying = true
+        print("occupy try start: LocationID \(realLocationId), TaskID \(taskId)")
+
         Task {
             do {
-                let result = try await ownershipRepository.tryOccupyLocation(
-                    locationId: 0,
+                let result = try await ownershipRepository.tryOccupySpot(
+                    spotId: realLocationId,
                     userId: userId,
-                    taskId: 0,
-                    scoreType: "steps",
+                    taskscoreId: taskId,
                     scoreValue: cmLogInt
                 )
-                
+
                 await MainActor.run {
+                    // 通信完了。結果に応じて hasTriedOccupy を更新
                     handleOccupyResult(result)
+                    isOccupying = false // ロック解除
                 }
             } catch {
                 await MainActor.run {
                     occupyStatusText = "通信エラーが発生しました"
                     print("occupy error:", error)
+                    isOccupying = false // エラー時もロックを解除して再試行可能にする
                 }
             }
         }
+    }
+
+    // 監視をスタートするためのメソッドを追加
+    func startRealtimeObserver(locations: [ParkUploadData]) {
+        // すでに監視中なら二重に走らないようにキャンセルする
+        realtimeTask?.cancel()
+        
+        realtimeTask = Task { [weak self] in
+            guard let self = self, let repository = self.ownershipRepository else { return }
+            
+            // リポジトリの監視機能を呼び出す
+            await repository.listenForOwnershipChanges {
+                Task {
+                    print("誰かが陣地を更新しました！地図を再描画します。")
+                    // 変更があったら、最新の占有状況を取り直して地図を更新
+                    await self.refreshOwnershipStates(locations: locations)
+                }
+            }
+        }
+    }
+    
+    // 画面が消える時などに監視を止める用（オプション）
+    func stopRealtimeObserver() {
+        realtimeTask?.cancel()
     }
     
     @MainActor
@@ -313,8 +333,8 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         }
 
         do {
-            async let myIds = ownershipRepository.fetchOwnedLocationIds(userId: userId)
-            async let otherIds = ownershipRepository.fetchOtherOwnedLocationIds(userId: userId)
+            async let myIds = ownershipRepository.fetchOwnedSpotIds(userId: userId)
+            async let otherIds = ownershipRepository.fetchOtherOwnedSpotIds(userId: userId)
 
             let (owned, otherOwned) = try await (myIds, otherIds)
 
@@ -333,28 +353,29 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
 
     
     func buildMapItems(
-        locations: [ParkUploadData],
-        ownedLocationIds: Set<Int>,
-        otherOwnedLocationIds: Set<Int>
+                locations: [ParkUploadData],
+                ownedLocationIds: Set<Int>,
+                otherOwnedLocationIds: Set<Int>
     ) {
         mapItems = locations.map { location in
             let status: OccupyStatus
             
-            /*
-             if ownedLocationIds.contains(location.id) {
-             status = .ownedByMe
-             } else if otherOwnedLocationIds.contains(location.id) {
-             status = .ownedByOther
-             } else {
-             status = .notOwned
-             }
-             */
-            status = .notOwned // ひとまずすべて「未占有」として扱う
+            let spotId = location.taskscores!.first!.spot_id
+            
+            if ownedLocationIds.contains(spotId) {
+                status = .ownedByMe    // 自分の陣地
+            } else if otherOwnedLocationIds.contains(spotId) {
+                status = .ownedByOther // 誰かの陣地
+            } else {
+                status = .notOwned     // 誰もいない
+            }
+            
             return MapItem(
-                id: 0,
+                id: spotId,
                 name: location.name,
                 coordinate: location.coordinate,
-                occupyStatus: status
+                occupyStatus: status,
+                park: location
             )
         }
     }

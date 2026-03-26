@@ -69,19 +69,19 @@ struct MapView: View {
                 
                 
                 // Supabase から取得したピン
-                ForEach(parkViewModel.parks) { park in
-                    Annotation(park.name, coordinate: park.coordinate){
+                ForEach(viewModel.mapItems) { item in
+                    Annotation(item.name, coordinate: item.coordinate){
                         
                         MarkerView(
-                            park: park,
-                            statusColor: .green
+                            park: item.park, // 💡 元の公園データ
+                            statusColor: item.occupyStatus.color // 🎨 陣地ごとの色！
                         )
                         .contentShape(Rectangle())
                         .onTapGesture {
                             withAnimation(.easeOut(duration: 2.0)) {
-                                selectedPark = park
+                                selectedPark = item.park // item.parkを使う
                                 mapViewModel.position = .region(MKCoordinateRegion(
-                                    center: park.coordinate,
+                                    center: item.coordinate,
                                     span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
                                 ))
                             }
@@ -132,10 +132,9 @@ struct MapView: View {
                 }
                 
                 // 4. その他の更新処理
+                await viewModel.refreshOwnershipStates(locations: parkViewModel.parks)
+                viewModel.startRealtimeObserver(locations: parkViewModel.parks)
                 await profileViewModel.fetchProfile()
-                // ※viewModel(StepViewModel)側の更新処理は、parkViewModel.parks に合わせて後で修正が必要です
-                // let locations = locationViewModel.items
-                // await viewModel.refreshOwnershipStates(locations: locations)
                 await viewModel.checkAndSyncCalories()
                 await profileViewModel.refreshAvatar()
             }
@@ -289,25 +288,3 @@ struct MapView: View {
         }
     }
 }
-//
-//extension Color {
-//    static func colorFromName(_ name: String) -> Color {
-//        switch name.lowercased() {
-//        case "red":      return .red
-//        case "orange":   return .orange
-//        case "yellow":   return .yellow
-//        case "green":    return .green
-//        case "teal":     return .teal
-//        case "cyan":     return .cyan
-//        case "blue":     return .blue
-//        case "indigo":   return .indigo
-//        case "purple":   return .purple
-//        case "pink":     return .pink
-//        case "brown":    return .brown
-//        case "gray":     return .gray
-//        case "black":    return .black
-//        default:
-//            return .orange
-//        }
-//    }
-//}
