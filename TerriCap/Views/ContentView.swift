@@ -41,9 +41,15 @@ struct MainTabView: View {
                 }
                 .tag(Tab.map)
 
+            //StatsView()
             StatsView()
                 .tabItem {
                     Label("実績", systemImage: "chart.bar.fill")
+                }
+                .tag(Tab.stats)
+            SlimeView()
+                .tabItem {
+                    Label("アバター", systemImage: "circle.fill")
                 }
                 .tag(Tab.stats)
         }
