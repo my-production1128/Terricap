@@ -7,7 +7,16 @@
 import CoreLocation
 
 class LocationManager: NSObject, CLLocationManagerDelegate, LocationServiceType {
-    private var locationManger = CLLocationManager()
+
+    // ひとむ追加：最後に公園検索を実行した場所を保存するプロパティ
+    private var lastSearchLocation: CLLocation?
+    
+    // ひとむ追加：何メートル移動したら再検索するか
+    private let searchThreshold: CLLocationDistance = 100
+
+
+    
+    var locationManger = CLLocationManager()
 
     private var _lastNumberOfSteps: NSNumber = 0
     weak var delegate: LocationServiceDelegate?
@@ -72,6 +81,32 @@ class LocationManager: NSObject, CLLocationManagerDelegate, LocationServiceType 
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
+   
+        //--------------------------------
+        // ★ 追加:移動距離判定(ここ要検討)
+        let shouldSearch: Bool
+        if let lastLocation = lastSearchLocation {
+            // 前回検索した場所からの距離（メートル）を計算
+            let distance = location.distance(from: lastLocation)
+            print("📏 移動距離: \(Int(distance))m / 次のスキャンまで残り: \(Int(searchThreshold - distance))m")
+            shouldSearch = distance >= searchThreshold
+        } else {
+            // 初回起動時は前回地点がないので必ず実行
+            shouldSearch = true
+        }
+        
+        if shouldSearch {
+            print("[AUTO SCAN] \(Int(searchThreshold))m以上移動したため、公園検索を実行します。")
+            ParkRepository.shared.searchAndSave(at: location.coordinate)
+            // 今の場所を「最後に検索した場所」として記憶
+            lastSearchLocation = location
+        }
+        
+        
+        
+        
+    //---------------------------------------------------
+        
         print("didUpdateLocations locations=\(locations)")
         delegate?.locationManager(self, didUpdateLocation: location)
 

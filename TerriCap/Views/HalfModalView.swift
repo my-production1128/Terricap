@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct HalfModalView: View {
-    let item: Location
+    let park: ParkUploadData
     let occupy: String
     @Environment(\.dismiss) private var dismiss
 
@@ -37,13 +37,13 @@ struct HalfModalView: View {
                             .foregroundStyle(Color.gray)
                     }
                     Spacer()
-                    Text("\(item.name)")
+                    Text("\(park.name)")
                         .font(.title3)
                         .fontWeight(.bold)
                     Spacer()
                     Button{
                         istargetLocation = true
-                        viewModel.startMeasurement(target: item)
+                        viewModel.startMeasurement(target: park)
                         dismiss()
                     }label: {
                         Image(systemName: "figure.walk.circle.fill")
@@ -68,29 +68,11 @@ struct HalfModalView: View {
                             Text("辿り着くまでの歩数")
                                 .font(.headline)
                             HStack{
-                                Text("\(item.tasks?.first?.goal_move_value ?? 0)")
+                                Text("\(park.taskscores?.first?.wlk ?? 2000)")
                                     .font(.largeTitle)
                                     .fontWeight(.heavy)
                                 Text("歩")
                                     .font(.title2)
-                            }
-                        }
-                        .foregroundStyle(.white)
-                    }
-                    ZStack{
-                        Rectangle()
-                            .fill(.green)
-                            .frame(width: 180, height: 100)
-                            .cornerRadius(10)
-                        VStack{
-                            Text("消費するカロリー")
-                                .font(.headline)
-                            HStack{
-                                Text("\(item.tasks?.first?.goal_spot_value ?? 0)")
-                                    .font(.largeTitle)
-                                    .fontWeight(.heavy)
-                                Text("kcal")
-                                    .font(.title)
                             }
                         }
                         .foregroundStyle(.white)
@@ -106,7 +88,7 @@ struct HalfModalView: View {
                         Text("スポット占有での獲得ポイント")
                             .font(.headline)
                         HStack{
-                            Text("\(item.tasks?.first?.goal_point_value ?? 0)")
+                            Text("\(park.taskscores?.first?.point_value ?? 2000)")
                                 .font(.largeTitle)
                                 .fontWeight(.heavy)
                             Text("P")
