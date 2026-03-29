@@ -150,127 +150,80 @@ struct MapView: View {
                 }
             }
             .ignoresSafeArea(edges: [.bottom])
-            if istargetLocation{
-                VStack{
-                    Spacer()
-                    HStack{
-                        Rectangle()
-                            .fill(.white.opacity(0.9))
-                            .frame(width: 135, height: 90)
-                            .cornerRadius(30)
-                            .overlay(
-                                ZStack{
-                                    ZStack{
-                                        Text("歩数")
-                                            .font(.caption)
-                                        if viewModel.isTaskCleared {
-                                            Image(systemName: "checkmark.seal.fill")
-                                                .resizable()
-                                                .frame(width: 20, height: 20)
-                                                .symbolRenderingMode(.palette)
-                                                .foregroundStyle(.white, .yellow)
-                                                .padding(.leading, 55)
-                                        }
-                                    }
-                                    .padding(.bottom, 50)
-                                    HStack {
-                                        Text("\(viewModel.cmLogInt)")
-                                            .font(.title)
-                                            .bold()
-                                            .padding(.bottom, 5)
-                                        if let target = viewModel.targetSteps {
-                                            Text("/\(target)")
-                                                .font(.caption)
-                                                .foregroundColor(.black)
-                                        } else {
-                                            Text("/目標未設定")
-                                                .font(.caption)
-                                                .foregroundColor(.gray)
-                                        }
-                                    }
-                                    .padding(.top, 12)
-                                }
-                                    //.padding(.vertical, 20)
-                            )
-                            .padding(.vertical, 20)
-                            .padding(.horizontal, 7)
-                        Spacer()
-                        Button(action: {
-                            showingAlert.toggle()
-                        }) {
-                            Image(systemName: "stop.circle.fill")
-                                .resizable()
-                                .frame(width: 50, height: 50)
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .red)
-                                .padding(14)
-                            
-                        }
-                    }
-                }
-                
-            }
-        }
-        .sheet(item: $profileViewModel.authViewController) { item in
-            GameCenterLoginSheet(viewController: item.vc)
-        }
-        .sheet(isPresented: $viewModel.showCalorieResult) {
-            if let calories = viewModel.lastFetchedCalories {
-                CalorieResultSheet(targetCalories: calories)
-                    .presentationDetents([.medium]) // 半分の高さで表示
-            }
-        }
-        .ignoresSafeArea(edges: [.bottom])
-        .alert("確認", isPresented: $showingAlert){
-            Button("いいえ", role: .cancel){}
-            Button("はい"){
-                istargetLocation = false
-                viewModel.stopMeasurement()
-            }
-        } message: {
-            Text("現在の測定内容を破棄しますか？")
-        }
 
-        
-        HStack{
+
             if istargetLocation {
                 VStack{
-                    if let distanceText = viewModel.distanceDisplayString,
-                       let targetName = viewModel.targetLocation?.name {
-                        VStack(spacing: 4) {
-                            if let rawDist = viewModel.rawDistanceToTarget, rawDist <= 150 {
-                                HStack{
-                                    Image(systemName: "exclamationmark.circle.fill")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 38, height: 38)
-                                        .symbolRenderingMode(.palette)
-                                        .foregroundStyle(.white, .yellow)
-                                    Text("占有範囲に入りました (\(distanceText))")
-                                        .font(.headline)
-                                }
+                    HStack{
+                        Text("歩数")
+                            .font(.caption)
+                            .padding(.leading, 10)
+                        if viewModel.isTaskCleared {
+                            Image(systemName: "checkmark.seal.fill")
+                                .resizable()
+                                .frame(width: 20, height: 20)
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(.white, .yellow)
+                                .padding(.leading, 55)
+                        }
+                        HStack {
+                            Text("\(viewModel.cmLogInt)")
+                                .font(.title)
+                                .bold()
+                                .padding(.bottom, 5)
+                            if let target = viewModel.targetSteps {
+                                Text("/\(target)")
+                                    .font(.caption)
+                                    .foregroundColor(.black)
                             } else {
-                                HStack{
-                                    Image(systemName: "mappin.and.ellipse")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 43, height: 43)
-                                        .foregroundStyle(.green)
-                                    VStack(alignment: .leading){
-                                        Text("\(targetName)まで")
-                                            .font(.caption)
-                                        Text("残り\(distanceText)")
-                                            .font(.title3)
-                                            .bold()
-                                    }
-                                }
+                                Text("/目標未設定")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
                             }
                         }
+                        Spacer()
+                    }
+
+                    if let distanceText = viewModel.distanceDisplayString,
+                       let targetName = viewModel.targetLocation?.name {
+                        HStack{
+                            if let rawDist = viewModel.rawDistanceToTarget, rawDist <= 150 {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 38, height: 38)
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(.white, .yellow)
+                                Text("占有範囲に入りました (\(distanceText))")
+                                    .font(.headline)
+                            } else {
+                                HStack{
+                                        Text("\(targetName)まで")
+                                            .font(.caption)
+                                            .padding(.leading, 10)
+                                        Text("\(distanceText)")
+                                            .font(.title3)
+                                            .bold()
+                                }
+                            }
+                            Spacer()
+                        }
+                    }
+                    Spacer()
+                    Button(action: {
+                        showingAlert.toggle()
+                    }) {
+                        Image(systemName: "stop.circle.fill")
+                            .resizable()
+                            .frame(width: 50, height: 50)
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, .red)
+                            .padding(20)
+
                     }
                 }
             }
         }
-//        }
         .sheet(isPresented: $viewModel.showCalorieResult) {
             if let calories = viewModel.lastFetchedCalories {
                 CalorieResultSheet(targetCalories: calories)
