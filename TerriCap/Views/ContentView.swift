@@ -30,7 +30,6 @@ struct MainTabView: View {
     enum Tab {
         case map,
              stats,
-             character,
              ranking,
              account
     }
@@ -48,12 +47,12 @@ struct MainTabView: View {
                     Label("実績", systemImage: "chart.bar.fill")
                 }
                 .tag(Tab.stats)
-
-            CharacterView()
-                .tabItem {
-                    Label("キャラクター", systemImage: "crown.fill")
-                }
-                .tag(Tab.character)
+//ここにことはちゃんがチャラクターの画面追加する
+//            CharacterView()
+//                .tabItem {
+//                    Label("キャラクター", systemImage: "crown.fill")
+//                }
+//                .tag(Tab.character)
 
             RankingView()
                 .tabItem {
