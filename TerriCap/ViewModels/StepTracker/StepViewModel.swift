@@ -31,6 +31,13 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
     @Published var isOccupying: Bool = false // 通信中フラグ
     @Published var lastFetchedCalories: Double? = nil // 最新で取得できたカロリー
     @Published var showCalorieResult: Bool = false    // シート表示フラグ
+    @Published var showOccupationCompleteCard: Bool = false
+
+
+
+
+
+
     private var isCalorieResultShown = false
 
     private var realtimeTask: Task<Void, Never>?
@@ -192,11 +199,36 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
                 print("タスククリア 現在:\(cmLogInt) / 目標:\(target)")
             }
             self.checkOccupyStatus()
+//            self.checkOccupationCompletion()
         } else {
             isTaskCleared = false
         }
     }
-    
+
+    // MARK: - カード表示判定ロジック
+        func checkOccupationCompletion() {
+            // 既にカードが表示されている、または目標がない場合は何もしない（連打防止）
+            guard targetLocation != nil, !showOccupationCompleteCard else { return }
+
+            let isStepsCleared = self.isTaskCleared
+            let isDistanceCleared = (self.rawDistanceToTarget ?? 1000) <= 300 // 距離300m以内
+
+            
+            self.checkOccupyStatus()
+            // 🌟 歩数と距離、両方の条件を満たした瞬間！
+            if isStepsCleared && isDistanceCleared {
+
+                // ① 即座に裏側で占有通信（API）を自動実行する！
+                self.checkOccupyStatus()
+
+                // ② 同時にUIを「占有完了カード」の表示に切り替える
+                DispatchQueue.main.async {
+                    self.showOccupationCompleteCard = true
+                }
+            }
+        }
+
+
     // MARK: - その他デリゲートメソッド
     func pedometerManager(_ manager: PedometerManager, didUpdateActivity activity: String) {
         DispatchQueue.main.async {
@@ -226,12 +258,13 @@ class StepViewModel: NSObject, ObservableObject, PedometerManagerDelegate, Healt
         DispatchQueue.main.async { self.currentLocation = location
             if self.isMeasuring {
                 self.checkOccupyStatus()
+//                self.checkOccupationCompletion()
             }
         }
 
     }
     
-    private func checkOccupyStatus() {
+    func checkOccupyStatus() {
         // すでに占有処理が完了している、または現在通信中なら即座に抜ける
         guard !hasTriedOccupy && !isOccupying else { return }
 

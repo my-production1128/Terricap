@@ -20,7 +20,8 @@ struct MapView: View {
     @State private var selectedPark: ParkUploadData? = nil
     @State var istargetLocation = false
     @State private var showingAlert: Bool = false
-    
+    @State private var showOccupationCompleteCard: Bool = false
+
     init() {
         let vm = StepViewModel(
             pedometerService: PedometerManager.shared,
@@ -39,7 +40,7 @@ struct MapView: View {
                 
                 // 現在地
                 UserAnnotation {
-                    if let profile = profileViewModel.profile {
+//                    if let profile = profileViewModel.profile {
                         
                         ZStack {
                             // 背景の装飾（必要に応じて）
@@ -64,7 +65,7 @@ struct MapView: View {
                                     .foregroundStyle(.gray)
                             }
                         }
-                    }
+//                    }
                 }
                 
                 
@@ -78,7 +79,7 @@ struct MapView: View {
                         )
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            withAnimation(.easeOut(duration: 2.0)) {
+                            withAnimation(.easeOut(duration: 0.5)) {
                                 selectedPark = item.park // item.parkを使う
                                 mapViewModel.position = .region(MKCoordinateRegion(
                                     center: item.coordinate,
@@ -90,19 +91,19 @@ struct MapView: View {
                     .annotationTitles(.hidden)
                 }
             }
-            .sheet(item: $selectedPark) { park in
-                HalfModalView(
-                    park: park,
-                    occupy: "占有状況", // ★ひとまず仮置き
-                    viewModel: self.viewModel,
-                    istargetLocation: $istargetLocation
-                )
-                .presentationDetents([.fraction(0.45)])
-                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
-                .presentationBackground(.clear)
-                .presentationCornerRadius(55)
-                .transition(.identity)
-            }
+//            .sheet(item: $selectedPark) { park in
+//                HalfModalView(
+//                    park: park,
+//                    occupy: "占有状況", // ★ひとまず仮置き
+//                    viewModel: self.viewModel,
+//                    istargetLocation: $istargetLocation
+//                )
+//                .presentationDetents([.fraction(0.45)])
+//                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
+//                .presentationBackground(.clear)
+//                .presentationCornerRadius(55)
+//                .transition(.identity)
+//            }
             .ignoresSafeArea(edges: .bottom)
             .mapControls {
                 MapUserLocationButton()
@@ -125,14 +126,17 @@ struct MapView: View {
                 if let userCoord = LocationManager.shared.locationManger.location?.coordinate {
                     // 周辺の公園を検索 → Supabaseに保存 → 最新の公園リストを取得
                     await parkViewModel.searchAndSaveParks(at: userCoord)
+                    print("📍 取得した公園数 (API): \(parkViewModel.parks.count)")
                 } else {
                     print("DEBUG: まだ現在地が取得できていません")
                     // 位置情報が取れなくても、とりあえずDBに入っている公園は表示しておく
                     await parkViewModel.fetchParks()
+                    print("📍 取得した公園数 (DB): \(parkViewModel.parks.count)")
                 }
                 
                 // 4. その他の更新処理
                 await viewModel.refreshOwnershipStates(locations: parkViewModel.parks)
+                print("🗺️ マップ表示用アイテム数: \(viewModel.mapItems.count)") // ← ここが 0 だと表示されません！
                 viewModel.startRealtimeObserver(locations: parkViewModel.parks)
                 await profileViewModel.fetchProfile()
                 await viewModel.checkAndSyncCalories()
@@ -150,6 +154,37 @@ struct MapView: View {
             }
             .ignoresSafeArea(edges: [.bottom])
 
+
+            // 🌟 追加: フローティングカードの表示
+                        // （タスク実行中じゃない ＆ 公園が選択されている時に表示）
+                        if let park = selectedPark, !istargetLocation {
+                            VStack {
+                                Spacer() // 上を空白にして下部に押し下げる
+
+                                ParkDetailCard(
+                                    park: park,
+                                    occupy: "占有状況",
+                                    onClose: {
+                                        // 閉じるボタンのアニメーション
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                            selectedPark = nil
+                                        }
+                                    },
+                                    onStart: {
+                                        // 開始ボタンのアニメーション
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                            istargetLocation = true
+                                            viewModel.startMeasurement(target: park)
+                                            selectedPark = nil // カードを消す
+                                        }
+                                    }
+                                )
+                                .padding(.bottom, 20) // タブバーに被らないように少し浮かす
+                            }
+                            .zIndex(2) // マップより上に表示
+                            // 下からスッと出てくるアニメーション
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
 
             if istargetLocation {
                 VStack{
@@ -208,20 +243,74 @@ struct MapView: View {
                             Spacer()
                         }
                     }
-                    Spacer()
-                    Button(action: {
-                        showingAlert.toggle()
-                    }) {
-                        Image(systemName: "stop.circle.fill")
-                            .resizable()
-                            .frame(width: 50, height: 50)
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, .red)
-                            .padding(20)
+                    HStack{
+                        Button(action: {
+                            showingAlert.toggle()
+                        }) {
+                            Image(systemName: "stop.circle.fill")
+                                .resizable()
+                                .frame(width: 50, height: 50)
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(.white, .red)
+                                .padding(20)
 
+                        }
+                        Spacer()
                     }
+                    Spacer()
                 }
             }
+            // 🌟 占有完了カードの表示
+                        if viewModel.showOccupationCompleteCard {
+                            Color.black.opacity(0.5)
+                                .ignoresSafeArea()
+
+                            VStack(spacing: 24) {
+                                Image(systemName: "flag.checkered.2.crossed")
+                                    .font(.system(size: 60))
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(.white, .yellow)
+                                    .padding(.top, 20)
+
+                                Text("占有完了！")
+                                    .font(.largeTitle)
+                                    .fontWeight(.black)
+                                    .foregroundStyle(.white)
+
+                                if let targetName = viewModel.targetLocation?.name {
+                                    Text("\(targetName)を占有しました")
+                                        .font(.headline)
+                                        .foregroundStyle(.white.opacity(0.9))
+                                }
+
+                                Button(action: {
+                                    // アニメーション付きでカードを閉じ、計測を終了する
+                                    withAnimation(.spring()) {
+                                        viewModel.showOccupationCompleteCard = false
+                                        istargetLocation = false
+                                        viewModel.stopMeasurement()
+                                    }
+                                }) {
+                                    Text("報酬を受け取る")
+                                        .font(.title3.bold())
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 16)
+                                        .background(Color.white)
+                                        .foregroundStyle(.orange)
+                                        .cornerRadius(30)
+                                }
+                                .padding(.horizontal, 30)
+                                .padding(.bottom, 20)
+                            }
+                            .frame(width: 320)
+                            .background(
+                                RoundedRectangle(cornerRadius: 24)
+                                    .fill(LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                    .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 10)
+                            )
+                            .transition(.scale.combined(with: .opacity)) // ポップアップアニメーション
+                            .zIndex(100) // 確実に一番上に表示
+                        }
         }
         .sheet(isPresented: $viewModel.showCalorieResult) {
             if let calories = viewModel.lastFetchedCalories {
@@ -238,6 +327,12 @@ struct MapView: View {
             }
         } message: {
             Text("現在の測定内容を破棄しますか？")
+        }
+        .onChange(of: viewModel.isTaskCleared) { _, _ in
+            viewModel.checkOccupationCompletion()
+        }
+        .onChange(of: viewModel.rawDistanceToTarget) { _, _ in
+            viewModel.checkOccupationCompletion()
         }
     }
 }
